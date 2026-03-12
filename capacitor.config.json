@@ -1,0 +1,6 @@
+{
+  "appId": "com.task.app",
+  "appName": "inTime",
+  "webDir": "D:/chandan/git/inTIME/src-capacitor/www",
+  "bundledWebRuntime": false
+}

@@ -1,0 +1,98 @@
+<template>
+  <q-layout view="hHh lpR fFf">
+    <!-- Header -->
+    <q-header elevated reveal class="bg-primary text-white q-pt-lg">
+      <q-toolbar>
+        <q-btn flat dense icon="arrow_back" @click="goBack" />
+        <q-toolbar-title>
+          {{ communityName }}
+        </q-toolbar-title>
+        <q-btn
+          label="New Task"
+          no-caps
+          flat
+          class="glass-btn q-px-md q-ml-sm"
+          @click="openCreate"
+        />
+      </q-toolbar>
+    </q-header>
+
+    <!-- Page Content -->
+    <q-page-container>
+      <router-view />
+    </q-page-container>
+
+    <!-- Bottom Tabs -->
+    <q-footer bordered>
+      <q-tabs
+        v-model="tab"
+        dense
+        align="justify"
+        indicator-color="white"
+        active-color="primary"
+        class="text-grey-5 bg-grey-2"
+      >
+        <q-route-tab
+          name="tasks"
+          icon="task"
+          label="Tasks"
+          :to="`/community/${$route.params.id}/tasks`"
+          exact
+        />
+
+        <q-route-tab
+          name="users"
+          icon="group"
+          label="Members"
+          :to="`/community/${$route.params.id}/users`"
+          exact
+        />
+      </q-tabs>
+    </q-footer>
+  </q-layout>
+</template>
+
+<script>
+import { getDatabase, ref, get } from 'firebase/database'
+
+export default {
+  name: 'CommunityLayout',
+
+  data() {
+    return {
+      tab: 'tasks',
+      communityName: '',
+    }
+  },
+
+  mounted() {
+    this.fetchCommunity()
+  },
+
+  methods: {
+    async fetchCommunity() {
+      const db = getDatabase()
+      const communityId = this.$route.params.id
+
+      const snapshot = await get(ref(db, 'communities/' + communityId))
+      if (snapshot.exists()) {
+        this.communityName = snapshot.val().name
+      }
+    },
+
+    goBack() {
+      this.$router.push('/')
+    },
+  },
+}
+</script>
+
+<style scoped>
+.glass-btn {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 500;
+}
+</style>
