@@ -1,0 +1,63 @@
+setx ANDROID_HOME "%USERPROFILE%\AppData\Local\Android\Sdk"
+setx ANDROID_SDK_ROOT "%USERPROFILE%\AppData\Local\Android\Sdk"
+setx path "%path%;%ANDROID_SDK_ROOT%\tools;%ANDROID_SDK_ROOT%\platform-tools"
+set JAVA_HOME=C:\Program Files\Android\Android Studio\jbr
+set PATH=%JAVA_HOME%\bin;%PATH%
+
+=>Create new Project
+	npm init quasar@latest
+
+=>Add capacitor mode
+	quasar mode add capacitor
+
+=>Copy capacitor.config.js directly inside root folder and set below property
+  "webDir": "D:/chandan/git/vehicle-challan/src-capacitor/www", 
+ 
+  {
+	"appId": "com.challanbharo.app",
+	"appName": "ChallanBharo App",
+	"webDir": "D:/chandan/git/challan-bharo/src-capacitor/www",
+	"bundledWebRuntime": false
+  }
+
+=>Add Android Profile
+	npm install -D @capacitor/cli
+	npm install @capacitor/android
+	npx cap add android
+	npx cap sync android
+
+=>Android WebView (Optional Better UX)
+	npm install @capacitor/browser
+	npx cap sync
+=>Build/Dev App
+quasar build -m capacitor -T android
+quasar dev -m capacitor -T android
+
+=>Open Android App
+	npx cap open android
+
+
+
+D:/chandan/git/vehicle-challan/src-capacitor/www
+
+
+#npx cap sync
+could not determine executable to run
+	Fix: npm install -D @capacitor/cli
+
+#npx cap sync android
+android platform has not been added yet
+
+
+Settings → About phone → Tap “Build number” 7 times
+Settings → Developer options → USB debugging ON
+adb devices
+
+=>For Any Changes
+npx quasar build -m capacitor -T android
+npx cap sync android
+=>Uninstall the app
+Settings → Apps → ChallanBharo App → Uninstall
+
+=>Install the app again
+npx cap open android
