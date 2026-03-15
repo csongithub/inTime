@@ -38,15 +38,18 @@ const routes = [
       },
       {
         path: 'tasks',
+        name: 'tasks',
         component: () => import('pages/community/TasksPage.vue'),
       },
       {
         path: 'users',
+        name: 'users',
         component: () => import('pages/community/UsersPage.vue'),
       },
       {
-        path: 'new',
-        component: () => import('components/task/NewTask.vue'),
+        path: '/community/:communityId/task/:taskId/discussion',
+        name: 'task-discussion',
+        component: () => import('pages/community/TaskDiscussionPage.vue'),
       },
     ],
   },

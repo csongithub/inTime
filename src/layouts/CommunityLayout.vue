@@ -8,11 +8,12 @@
           {{ communityName }}
         </q-toolbar-title>
         <q-btn
+          v-if="$route.name === 'tasks'"
           label="New Task"
           no-caps
           flat
           class="glass-btn q-px-md q-ml-sm"
-          @click="openCreate"
+          @click="openCreateTask"
         />
       </q-toolbar>
     </q-header>
@@ -54,7 +55,7 @@
 
 <script>
 import { getDatabase, ref, get } from 'firebase/database'
-
+import event from 'src/utils/eventBus'
 export default {
   name: 'CommunityLayout',
 
@@ -82,6 +83,10 @@ export default {
 
     goBack() {
       this.$router.push('/')
+    },
+
+    openCreateTask() {
+      event.emit('open-create-task')
     },
   },
 }

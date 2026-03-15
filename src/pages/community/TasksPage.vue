@@ -1,5 +1,5 @@
 <template>
-  <q-page class="q-pa-xs">
+  <q-page class="">
     <!-- <div class="row q-gutter-sm q-mb-md">
       <q-chip clickable color="primary" text-color="white">My Tasks</q-chip>
       <q-chip clickable outline>Started</q-chip>
@@ -7,13 +7,18 @@
     </div> -->
     <div class="row q-col-gutter-md q-mt-md">
       <div class="col-12 col-md-6 col-lg-4" v-for="task in taskStore.tasks" :key="task.id">
-        <TaskCard :task="task" @edit="openEdit" @status-update="handleStatusUpdate" />
+        <TaskCard
+          :task="task"
+          @edit="openEdit"
+          @status-update="handleStatusUpdate"
+          @discussion="openTaskDiscussion"
+        />
       </div>
     </div>
 
     <TaskFormDialog v-model="dialog" :editTask="selectedTask" @save="handleSave" />
 
-    <q-page-sticky position="bottom-right" :offset="[20, 20]">
+    <!-- <q-page-sticky position="bottom-right" :offset="[20, 20]">
       <q-btn
         round
         dense
@@ -24,7 +29,7 @@
         class="premium-fab"
         @click="openCreate"
       />
-    </q-page-sticky>
+    </q-page-sticky> -->
   </q-page>
 </template>
 
@@ -32,6 +37,7 @@
 import { useTaskStore } from 'src/stores/taskStore'
 import TaskCard from '../../components/task/TaskCard.vue'
 import TaskFormDialog from '../../components/task/TaskFormDialog.vue'
+import event from 'src/utils/eventBus'
 
 export default {
   components: { TaskCard, TaskFormDialog },
@@ -51,17 +57,16 @@ export default {
   },
 
   mounted() {
+    event.on('open-create-task', this.openCreate)
     this.taskStore.subscribe(this.communityId)
   },
 
   beforeUnmount() {
+    event.off('open-create-task', this.openCreate)
     this.taskStore.unsubscribeListener()
   },
 
   methods: {
-    openCreateDialog() {
-      this.showCreateDialog = true
-    },
     openCreate() {
       this.selectedTask = null
       this.dialog = true
@@ -84,6 +89,15 @@ export default {
       }
 
       this.dialog = false
+    },
+    openTaskDiscussion(task) {
+      this.$router.push({
+        name: 'task-discussion',
+        params: {
+          communityId: this.communityId,
+          taskId: task.id,
+        },
+      })
     },
   },
 }

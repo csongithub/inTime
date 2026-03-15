@@ -1,5 +1,5 @@
 <template>
-  <q-card class="q-ma-sm shadow-2">
+  <q-card class="q-ml-xs q-mr-xs shadow-2">
     <q-card-section class="cursor-pointer" @click="isMobile && (expanded = !expanded)">
       <div class="row items-center justify-between">
         <div class="col full-width">
@@ -201,7 +201,20 @@
           </template>
         </q-circular-progress>
       </div>
-      <!-- {{ JSON.stringify(task) }} -->
+      <!-- DISCUSSION -->
+      <div class="column items-start">
+        <div class="text-caption text-grey-7 text-weight-medium">Discussion</div>
+
+        <q-btn
+          flat
+          dense
+          round
+          icon="forum"
+          color="primary"
+          class="q-mt-xs"
+          @click.stop="openDiscussion"
+        />
+      </div>
     </q-card-section>
   </q-card>
 </template>
@@ -336,6 +349,10 @@ export default {
         taskId: this.task.id,
         status: newStatus,
       })
+    },
+
+    openDiscussion() {
+      this.$emit('discussion', this.task)
     },
   },
 }

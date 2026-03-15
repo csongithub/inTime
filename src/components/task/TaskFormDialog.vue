@@ -4,39 +4,55 @@
     transition-show="slide-up"
     transition-hide="slide-down"
     :maximized="$q.screen.lt.md"
+    persistent
+    @hide="clearForm"
   >
-    <q-card class="dialog-card full-height column">
-      <q-card-section class="q-pt-lg row items-center justify-between bg-primary text-white">
+    <q-layout view="hHh lpR fFf" container class="bg-white">
+      <!-- Header -->
+      <q-header elevated reveal class="bg-primary text-white q-pt-lg">
+        <q-toolbar>
+          <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
+          <q-toolbar-title> Create Task </q-toolbar-title>
+        </q-toolbar>
+      </q-header>
+      <q-page-container>
+        <q-page class="q-pa-md">
+          <q-card class="dialog-card full-height column">
+            <!-- <q-card-section class="q-pt-lg row items-center justify-between bg-primary text-white">
         <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
         <div class="text-h6">
-          {{ editMode ? 'Update Task: ' + form.id : 'New Task' }}
+          {{ editMode ? 'Update: ' + form.id : 'Task' }}
         </div>
-      </q-card-section>
+      </q-card-section> -->
+            <!-- Dialog Header -->
+            <!-- <q-toolbar class="bg-primary text-white">
+        <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
+        <q-toolbar-title>Create Task</q-toolbar-title>
+      </q-toolbar> -->
+            <!-- <q-separator /> -->
 
-      <q-separator />
+            <q-card-section class="scroll form-section">
+              <q-input v-model="form.title" label="Task Title" outlined dense class="q-mb-md" />
 
-      <q-card-section class="scroll form-section">
-        <q-input v-model="form.title" label="Task Title" outlined dense class="q-mb-md" />
+              <q-input
+                v-model="form.description"
+                label="Description"
+                type="textarea"
+                outlined
+                autogrow
+                class="q-mb-md"
+              />
 
-        <q-input
-          v-model="form.description"
-          label="Description"
-          type="textarea"
-          outlined
-          autogrow
-          class="q-mb-md"
-        />
+              <q-select
+                v-model="form.priority"
+                :options="priorities"
+                label="Priority"
+                outlined
+                dense
+                class="q-mb-md"
+              />
 
-        <q-select
-          v-model="form.priority"
-          :options="priorities"
-          label="Priority"
-          outlined
-          dense
-          class="q-mb-md"
-        />
-
-        <!-- <q-select
+              <!-- <q-select
           v-model="form.status"
           :options="statuses"
           label="Status"
@@ -45,63 +61,66 @@
           class="q-mb-md"
         /> -->
 
-        <q-input
-          v-model.number="form.anticipatedDays"
-          type="number"
-          label="Anticipated Days"
-          outlined
-          dense
-          class="q-mb-md"
-        />
+              <q-input
+                v-model.number="form.anticipatedDays"
+                type="number"
+                label="Anticipated Days"
+                outlined
+                dense
+                class="q-mb-md"
+              />
 
-        <q-select
-          v-model="form.assigneeId"
-          :options="filteredMembers"
-          option-label="name"
-          option-value="uid"
-          label="Assign"
-          emit-value
-          map-options
-          use-input
-          input-debounce="0"
-          @filter="filterMembers"
-          clearable
-          dense
-          @update:model-value="setAssignedById"
-          :behavior="$q.screen.lt.md ? 'dialog' : ''"
-        />
+              <q-select
+                v-model="form.assigneeId"
+                :options="filteredMembers"
+                option-label="name"
+                option-value="uid"
+                label="Assign"
+                emit-value
+                map-options
+                use-input
+                input-debounce="0"
+                @filter="filterMembers"
+                clearable
+                dense
+                @update:model-value="setAssignedById"
+                :behavior="$q.screen.lt.md ? 'dialog' : ''"
+              />
 
-        <q-btn
-          v-if="currentUserId !== form.assigneeId"
-          flat
-          size="md"
-          color="primary"
-          icon="person"
-          label="Assign To Me"
-          @click="assignToMe"
-          class="text-capitalize"
-        />
-        <div class="q-mt-md" v-if="editMode">
-          <div class="text-subtitle2">Progress: {{ form.progress }}%</div>
+              <q-btn
+                v-if="currentUserId !== form.assigneeId"
+                flat
+                size="md"
+                color="primary"
+                icon="person"
+                label="Assign To Me"
+                @click="assignToMe"
+                class="text-capitalize"
+              />
+              <div class="q-mt-md" v-if="editMode">
+                <div class="text-subtitle2">Progress: {{ form.progress }}%</div>
 
-          <q-slider
-            v-model="form.progress"
-            :min="0"
-            :max="100"
-            label
-            label-always
-            class="q-mt-sm"
-          />
-        </div>
-      </q-card-section>
+                <q-slider
+                  v-model="form.progress"
+                  :min="0"
+                  :max="100"
+                  label
+                  label-always
+                  class="q-mt-sm"
+                />
+              </div>
+            </q-card-section>
 
-      <q-separator />
-
-      <q-card-actions align="right" class="q-pa-md">
-        <q-btn flat label="Cancel" @click="dialogModel = false" />
-        <q-btn color="primary" label="Save" @click="saveTask" />
-      </q-card-actions>
-    </q-card>
+            <q-separator />
+            <q-btn class="q-ma-md" color="primary" label="Create" @click="saveTask" />
+            <!-- <q-card-actions align="right" class="q-pa-md">
+              <q-btn flat label="Cancel" @click="dialogModel = false" />
+              <q-btn color="primary" label="Create" @click="saveTask" />
+            </q-card-actions> -->
+          </q-card>
+        </q-page>
+      </q-page-container>
+    </q-layout>
   </q-dialog>
 </template>
 
@@ -237,6 +256,9 @@ export default {
     saveTask() {
       this.$emit('save', this.form)
       this.dialogModel = false
+    },
+    clearForm() {
+      this.form = this.getEmptyForm()
     },
   },
 }
