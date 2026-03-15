@@ -39,8 +39,11 @@
               {{ formatDate(comment.createdAt) }}
             </q-item-label>
 
-            <q-item-label caption class="q-mt-xs comment-text">
+            <!-- <q-item-label caption class="q-mt-xs comment-text">
               {{ comment.text }}
+            </q-item-label> -->
+            <q-item-label caption class="q-mt-xs text-pre-line comment-text">
+              <span v-html="formatComment(comment.text)"></span>
             </q-item-label>
           </q-item-section>
         </q-item>
@@ -50,26 +53,49 @@
     <q-separator />
 
     <!-- ADD COMMENT -->
+    <!-- ADD COMMENT -->
     <div class="row q-pa-sm items-center q-gutter-sm">
-      <q-input
-        v-model="newComment"
-        filled
-        dense
-        autogrow
-        class="col"
-        placeholder="Write a comment..."
-        @keyup.enter.exact="addComment"
-      />
+      <div class="col relative-position">
+        <q-input
+          ref="commentInput"
+          v-model="newComment"
+          filled
+          dense
+          autogrow
+          type="textarea"
+          placeholder="Write a comment..."
+          @update:model-value="handleInput"
+          @keyup.enter.exact="addComment"
+          @keyup="updateCaretPosition"
+        />
+
+        <!-- MENTION DROPDOWN -->
+        <div
+          v-if="showMentionMenu"
+          class="mention-dropdown shadow-4"
+          :style="{
+            top: dropdownY + 'px',
+            left: dropdownX + 'px',
+          }"
+        >
+          <q-list dense>
+            <q-item
+              v-for="user in mentionList"
+              :key="user.id"
+              clickable
+              @click="insertMention(user)"
+            >
+              <q-item-section>
+                {{ user.name }}
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div>
+      </div>
 
       <q-btn :disable="!newComment.trim()" icon="send" round color="primary" @click="addComment" />
-      <q-list v-if="showMentionList" bordered class="mention-list">
-        <q-item v-for="user in communityMembers" :key="user.id" clickable @click="selectUser(user)">
-          <q-item-section>
-            {{ user.name }}
-          </q-item-section>
-        </q-item>
-      </q-list>
     </div>
+
     <!-- {{ JSON.stringify(communityMembers) }} -->
   </q-page>
 </template>
@@ -87,15 +113,14 @@ export default {
     TaskCard,
   },
   watch: {
-    newComment(val) {
-      const lastWord = val.split(' ').pop()
-
-      if (lastWord.startsWith('@')) {
-        this.showMentionList = true
-      } else {
-        this.showMentionList = false
-      }
-    },
+    // newComment(val) {
+    //   const lastWord = val.split(' ').pop()
+    //   if (lastWord.startsWith('@')) {
+    //     this.showMentionList = true
+    //   } else {
+    //     this.showMentionList = false
+    //   }
+    // },
   },
 
   data() {
@@ -104,13 +129,19 @@ export default {
       taskId: null,
       communityId: null,
       comments: [],
-      newComment: '',
       currentUser: {
         id: 'user123',
         name: 'Chandan',
       },
+      newComment: '',
+      showMentionMenu: false,
+      mentionQuery: '',
+      mentionList: [],
+      mentions: {},
       communityMembers: [],
-      showMentionList: false,
+
+      dropdownX: 0,
+      dropdownY: 0,
     }
   },
 
@@ -150,17 +181,41 @@ export default {
 
       // 5️⃣ Remove null values (if any user missing)
       this.communityMembers = members.filter((member) => member !== null)
+    },
+    updateCaretPosition(e) {
+      const textarea = e.target
+      textarea.getBoundingClientRect()
 
-      // const membersRef = dbRef(db, `communityMembers/${this.communityId}`)
+      this.dropdownX = textarea.offsetLeft + 10
+      this.dropdownY = textarea.offsetTop + textarea.offsetHeight - 10
+    },
 
-      // onValue(membersRef, (snapshot) => {
-      //   const data = snapshot.val() || {}
+    handleInput(val) {
+      const match = val.match(/(?:^|\s)@(\w+)$/)
 
-      //   this.communityMembers = Object.keys(data).map((uid) => ({
-      //     id: uid,
-      //     name: data[uid].name,
-      //   }))
-      // })
+      if (match) {
+        this.mentionQuery = match[1].toLowerCase()
+        this.showMentionMenu = true
+        this.filterUsers()
+      } else {
+        this.showMentionMenu = false
+      }
+    },
+    filterUsers() {
+      this.mentionList = this.communityMembers
+        .filter((user) => user.name.toLowerCase().includes(this.mentionQuery))
+        .slice(0, 5)
+    },
+    insertMention(user) {
+      this.newComment = this.newComment.replace(/@(\w*)$/, `@${user.name} `)
+
+      this.mentions[user.uid] = true
+      this.showMentionMenu = false
+    },
+    formatComment(text) {
+      const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+      return escaped.replace(/@([a-zA-Z]+(?:\s[a-zA-Z]+)?)/g, '<span class="mention">@$1</span>')
     },
     selectUser(user) {
       const words = this.newComment.split(' ')
@@ -229,15 +284,17 @@ export default {
       const taskId = this.$route.params.taskId
 
       try {
+        // TODO: Save comment to Firebase
+        const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
+        const newCommentRef = push(commentsRef)
+
         const comment = {
           userId: this.currentUser.id,
           userName: this.currentUser.name,
           text: this.newComment,
           createdAt: Date.now(),
+          mentions: this.mentions,
         }
-        // TODO: Save comment to Firebase
-        const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
-        const newCommentRef = push(commentsRef)
 
         await set(newCommentRef, comment)
         this.newComment = ''
@@ -272,5 +329,25 @@ export default {
 
 .comment-text {
   white-space: pre-line;
+}
+
+.comment-text :deep(.mention) {
+  background: rgba(25, 118, 210, 0.1);
+  color: #1976d2;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: pre-line;
+}
+
+.mention-dropdown {
+  position: absolute;
+  z-index: 5000;
+  background: white;
+  border-radius: 8px;
+  min-width: 220px;
+  max-height: 250px;
+  overflow-y: auto;
+  border: 1px solid #e0e0e0;
 }
 </style>
