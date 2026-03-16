@@ -56,18 +56,21 @@
     <!-- ADD COMMENT -->
     <div class="row q-pa-sm items-center q-gutter-sm">
       <div class="col relative-position">
-        <q-input
-          ref="commentInput"
-          v-model="newComment"
-          filled
-          dense
-          autogrow
-          type="textarea"
-          placeholder="Write a comment..."
-          @update:model-value="handleInput"
-          @keyup.enter.exact="addComment"
-          @keyup="updateCaretPosition"
-        />
+        <div class="mention-wrapper">
+          <div class="mention-overlay" v-html="renderCommentWithChips(newComment)"></div>
+          <q-input
+            ref="commentInput"
+            v-model="newComment"
+            dense
+            autogrow
+            type="textarea"
+            placeholder="Write a comment..."
+            @update:model-value="handleInput"
+            @keyup="updateCaretPosition"
+            @keydown="handleKeyDown"
+          />
+          <!-- @keyup.enter.exact="addComment" -->
+        </div>
 
         <!-- MENTION DROPDOWN -->
         <div
@@ -80,9 +83,11 @@
         >
           <q-list dense>
             <q-item
-              v-for="user in mentionList"
+              v-for="(user, index) in mentionList"
               :key="user.id"
               clickable
+              :active="index === selectedMentionIndex"
+              active-class="mention-active"
               @click="insertMention(user)"
             >
               <q-item-section>
@@ -143,6 +148,8 @@ export default {
 
       dropdownX: 0,
       dropdownY: 0,
+
+      selectedMentionIndex: 0,
     }
   },
 
@@ -190,7 +197,14 @@ export default {
       this.dropdownX = textarea.offsetLeft + 10
       this.dropdownY = textarea.offsetTop + textarea.offsetHeight - 10
     },
+    renderCommentWithChips(text) {
+      if (!text) return ''
 
+      return text
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/@\[(.*?)\|(.*?)\]/g, '<span class="mention-chip">@$2</span>')
+    },
     handleInput(val) {
       const match = val.match(/(?:^|\s)@(\w+)$/)
 
@@ -213,6 +227,7 @@ export default {
       this.mentions[user.uid] = true
       this.mentionMap[user.name] = user.uid
       this.showMentionMenu = false
+      this.selectedMentionIndex = 0
     },
     convertMentions(text) {
       Object.keys(this.mentionMap).forEach((name) => {
@@ -224,6 +239,33 @@ export default {
       })
 
       return text
+    },
+    handleKeyDown(e) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        this.selectedMentionIndex = (this.selectedMentionIndex + 1) % this.mentionList.length
+        return
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        this.selectedMentionIndex =
+          (this.selectedMentionIndex - 1 + this.mentionList.length) % this.mentionList.length
+        return
+      }
+
+      if (e.key === 'Enter' && this.showMentionMenu) {
+        e.preventDefault()
+        const user = this.mentionList[this.selectedMentionIndex]
+        if (user) this.insertMention(user)
+        return
+      }
+
+      // Normal comment submission
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        this.addComment()
+      }
     },
     formatComment(text) {
       const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -378,5 +420,27 @@ export default {
   max-height: 250px;
   overflow-y: auto;
   border: 1px solid #e0e0e0;
+}
+.mention-active {
+  background: rgba(25, 118, 210, 0.1);
+}
+
+.mention-overlay {
+  position: absolute;
+  inset: 0;
+  padding: 10px 12px;
+  white-space: pre-wrap;
+  pointer-events: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: transparent;
+}
+
+.mention-chip {
+  background: rgba(25, 118, 210, 0.15);
+  color: #1976d2;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 600;
 }
 </style>
