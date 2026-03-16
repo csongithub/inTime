@@ -42,7 +42,7 @@
             <!-- <q-item-label caption class="q-mt-xs comment-text">
               {{ comment.text }}
             </q-item-label> -->
-            <q-item-label caption class="q-mt-xs text-pre-line comment-text">
+            <q-item-label caption class="q-mt-xs comment-text text-black">
               <span v-html="formatComment(comment.text)"></span>
             </q-item-label>
           </q-item-section>
@@ -137,7 +137,8 @@ export default {
       showMentionMenu: false,
       mentionQuery: '',
       mentionList: [],
-      // mentions: {},
+      mentions: {},
+      mentionMap: {},
       communityMembers: [],
 
       dropdownX: 0,
@@ -207,10 +208,22 @@ export default {
         .slice(0, 5)
     },
     insertMention(user) {
-      this.newComment = this.newComment.replace(/@(\w+)$/, `@[${user.uid}|${user.name}] `)
+      this.newComment = this.newComment.replace(/@(\w+)$/, `@${user.name} `)
 
-      // this.mentions[user.uid] = true
+      this.mentions[user.uid] = true
+      this.mentionMap[user.name] = user.uid
       this.showMentionMenu = false
+    },
+    convertMentions(text) {
+      Object.keys(this.mentionMap).forEach((name) => {
+        const uid = this.mentionMap[name]
+
+        const regex = new RegExp(`@${name}`, 'g')
+
+        text = text.replace(regex, `@[${uid}|${name}]`)
+      })
+
+      return text
     },
     formatComment(text) {
       const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
@@ -285,26 +298,32 @@ export default {
 
       try {
         //Extract the mentions
-        const mentions = {}
+        // const mentions = {}
 
-        const regex = /@\[(.*?)\|(.*?)\]/g
-        let match
+        // const regex = /@\[(.*?)\|(.*?)\]/g
+        // let match
 
-        while ((match = regex.exec(this.newComment)) !== null) {
-          mentions[match[1]] = true
-        }
+        // while ((match = regex.exec(this.newComment)) !== null) {
+        //   mentions[match[1]] = true
+        // }
+        const textForStorage = this.convertMentions(this.newComment)
         // TODO: Save comment to Firebase
         const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
         const newCommentRef = push(commentsRef)
 
         const comment = {
-          text: this.newComment,
+          text: textForStorage,
           userId: this.currentUser.id,
           userName: this.currentUser.name,
-
           createdAt: Date.now(),
-          mentions: mentions,
+          mentions: this.mentions,
         }
+
+        Object.keys(this.mentionMap).forEach((name) => {
+          if (!this.newComment.includes(name)) {
+            delete this.mentionMap[name]
+          }
+        })
 
         await set(newCommentRef, comment)
         this.newComment = ''
