@@ -137,7 +137,7 @@ export default {
       showMentionMenu: false,
       mentionQuery: '',
       mentionList: [],
-      mentions: {},
+      // mentions: {},
       communityMembers: [],
 
       dropdownX: 0,
@@ -207,15 +207,15 @@ export default {
         .slice(0, 5)
     },
     insertMention(user) {
-      this.newComment = this.newComment.replace(/@(\w*)$/, `@${user.name} `)
+      this.newComment = this.newComment.replace(/@(\w+)$/, `@[${user.uid}|${user.name}] `)
 
-      this.mentions[user.uid] = true
+      // this.mentions[user.uid] = true
       this.showMentionMenu = false
     },
     formatComment(text) {
       const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-      return escaped.replace(/@([a-zA-Z]+(?:\s[a-zA-Z]+)?)/g, '<span class="mention">@$1</span>')
+      return escaped.replace(/@\[(.*?)\|(.*?)\]/g, '<span class="mention">@$2</span>')
     },
     selectUser(user) {
       const words = this.newComment.split(' ')
@@ -284,16 +284,26 @@ export default {
       const taskId = this.$route.params.taskId
 
       try {
+        //Extract the mentions
+        const mentions = {}
+
+        const regex = /@\[(.*?)\|(.*?)\]/g
+        let match
+
+        while ((match = regex.exec(this.newComment)) !== null) {
+          mentions[match[1]] = true
+        }
         // TODO: Save comment to Firebase
         const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
         const newCommentRef = push(commentsRef)
 
         const comment = {
+          text: this.newComment,
           userId: this.currentUser.id,
           userName: this.currentUser.name,
-          text: this.newComment,
+
           createdAt: Date.now(),
-          mentions: this.mentions,
+          mentions: mentions,
         }
 
         await set(newCommentRef, comment)
