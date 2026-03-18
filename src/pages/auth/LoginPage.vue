@@ -1,10 +1,10 @@
 <template>
-  <q-page class="flex flex-center bg-primary">
-    <q-card class="login-card q-pa-lg q-ma-sm">
+  <q-page class="flex flex-center bg-white">
+    <q-card class="login-card q-pa-lg q-ma-sm" flat>
       <!-- App Logo / Title -->
       <div class="text-center q-mb-lg">
         <div class="text-h5 text-weight-bold text-primary">inTIME</div>
-        <div class="text-caption text-grey">Track your tasks efficiently</div>
+        <div class="text-caption text-grey">Task - Track - Collaborate</div>
       </div>
 
       <!-- Login Form -->

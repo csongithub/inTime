@@ -56,9 +56,9 @@
     <!-- ADD COMMENT -->
     <div class="row q-pa-sm items-center q-gutter-sm">
       <div class="col relative-position">
-        <div class="mention-wrapper">
-          <div class="mention-overlay" v-html="renderCommentWithChips(newComment)"></div>
+        <div>
           <q-input
+            class="mention-input"
             ref="commentInput"
             v-model="newComment"
             dense
@@ -69,7 +69,6 @@
             @keyup="updateCaretPosition"
             @keydown="handleKeyDown"
           />
-          <!-- @keyup.enter.exact="addComment" -->
         </div>
 
         <!-- MENTION DROPDOWN -->
@@ -117,16 +116,7 @@ export default {
   components: {
     TaskCard,
   },
-  watch: {
-    // newComment(val) {
-    //   const lastWord = val.split(' ').pop()
-    //   if (lastWord.startsWith('@')) {
-    //     this.showMentionList = true
-    //   } else {
-    //     this.showMentionList = false
-    //   }
-    // },
-  },
+  watch: {},
 
   data() {
     return {
@@ -197,14 +187,7 @@ export default {
       this.dropdownX = textarea.offsetLeft + 10
       this.dropdownY = textarea.offsetTop + textarea.offsetHeight - 10
     },
-    renderCommentWithChips(text) {
-      if (!text) return ''
 
-      return text
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/@\[(.*?)\|(.*?)\]/g, '<span class="mention-chip">@$2</span>')
-    },
     handleInput(val) {
       const match = val.match(/(?:^|\s)@(\w+)$/)
 
@@ -339,17 +322,8 @@ export default {
       const taskId = this.$route.params.taskId
 
       try {
-        //Extract the mentions
-        // const mentions = {}
-
-        // const regex = /@\[(.*?)\|(.*?)\]/g
-        // let match
-
-        // while ((match = regex.exec(this.newComment)) !== null) {
-        //   mentions[match[1]] = true
-        // }
         const textForStorage = this.convertMentions(this.newComment)
-        // TODO: Save comment to Firebase
+        // Save comment to Firebase
         const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
         const newCommentRef = push(commentsRef)
 
@@ -404,7 +378,7 @@ export default {
 
 .comment-text :deep(.mention) {
   background: rgba(25, 118, 210, 0.1);
-  color: #1976d2;
+  color: #18a722;
   font-weight: 600;
   padding: 2px 6px;
   border-radius: 4px;
@@ -422,25 +396,6 @@ export default {
   border: 1px solid #e0e0e0;
 }
 .mention-active {
-  background: rgba(25, 118, 210, 0.1);
-}
-
-.mention-overlay {
-  position: absolute;
-  inset: 0;
-  padding: 10px 12px;
-  white-space: pre-wrap;
-  pointer-events: none;
-  font-family: inherit;
-  font-size: 14px;
-  color: transparent;
-}
-
-.mention-chip {
-  background: rgba(25, 118, 210, 0.15);
-  color: #1976d2;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-weight: 600;
+  background: rgba(66, 176, 44, 0.1);
 }
 </style>

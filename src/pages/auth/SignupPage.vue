@@ -1,9 +1,9 @@
 <template>
-  <q-page class="flex flex-center bg-grey-2">
-    <q-card class="signup-card q-pa-lg">
+  <q-page class="flex flex-center bg-white">
+    <q-card class="signup-card q-pa-lg" flat>
       <!-- Header -->
       <div class="text-center q-mb-lg">
-        <div class="text-h5 text-weight-bold text-primary">Create Account</div>
+        <div class="text-h5 text-weight-bold text-primary">inTIME</div>
         <div class="text-caption text-grey">
           Join inTIME to manage and track your tasks in realtime
         </div>

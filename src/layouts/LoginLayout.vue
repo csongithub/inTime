@@ -23,6 +23,6 @@ export default {
 
 <style>
 .login-bg {
-  background: linear-gradient(135deg, #1976d2, #42a5f5);
+  background: linear-gradient(135deg, #ffffff, #42a5f5);
 }
 </style>
