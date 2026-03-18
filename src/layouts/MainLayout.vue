@@ -5,6 +5,9 @@
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title> inTIME</q-toolbar-title>
+
+        <!-- 🔔 Notification Bell -->
+        <NotificationBell />
       </q-toolbar>
     </q-header>
 
@@ -42,13 +45,22 @@ import { useRouter } from 'vue-router'
 import { useUserStore } from 'src/stores/user'
 import { ref as dbRef, get } from 'firebase/database'
 import { auth, db } from 'boot/firebase'
+import { useNotificationStore } from 'src/stores/notificationStore'
+
+import NotificationBell from 'src/components/notification/NotificationBell.vue'
 
 const userStore = useUserStore()
 const router = useRouter()
 const leftDrawerOpen = ref(false)
+const notificationStore = useNotificationStore()
 
 onMounted(() => {
   const uid = auth.currentUser.uid
+
+  //Start Notification Listerner
+  notificationStore.startListener(uid)
+
+  //Set Current User
   auth.onAuthStateChanged(async (user) => {
     if (user) {
       const snapshot = await get(dbRef(db, `users/${uid}`))
@@ -72,6 +84,7 @@ function toggleLeftDrawer() {
 }
 
 async function doLogout() {
+  notificationStore.stopListener()
   await logout()
   userStore.clearUser()
   router.push('/')

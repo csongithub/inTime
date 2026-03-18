@@ -1,0 +1,13 @@
+notifications
+   userId
+      notificationId
+         type: "MENTION" | "TASK_ASSIGNED" | "COMMENT" | "COMMUNITY_ADDED"
+         title: "Chandan mentioned you"
+         message: "in Task JMSC-101"
+         entityId: taskId
+         communityId: communityId
+         fromUserId: uid123
+         createdAt: timestamp
+         read: false
+         meta:
+            commentId: c45

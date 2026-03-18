@@ -109,6 +109,7 @@ import TaskCard from 'src/components/task/TaskCard.vue'
 import { db } from 'src/boot/firebase'
 import { ref as dbRef, onValue, get, push, set, onChildAdded } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
+import { notifyMention } from 'src/helpers/NotificationHelpers'
 
 export default {
   name: 'TaskDiscussionPage',
@@ -314,7 +315,18 @@ export default {
         this.comments.push(comment)
       })
     },
+    extractMentions(text) {
+      // const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      const regex = /@\[(.*?)\|(.*?)\]/g
+      const ids = []
 
+      let match
+      while ((match = regex.exec(text))) {
+        ids.push(match[1])
+      }
+
+      return ids
+    },
     async addComment() {
       if (!this.newComment.trim()) return
 
@@ -342,6 +354,18 @@ export default {
         })
 
         await set(newCommentRef, comment)
+
+        //Send Notification
+        const mentionedUserIds = this.extractMentions(textForStorage)
+
+        await notifyMention({
+          userIds: mentionedUserIds,
+          taskId: this.taskId,
+          communityId: this.communityId,
+          fromUser: this.currentUser,
+        })
+
+        //Re-Initialize the comment model
         this.newComment = ''
       } catch (err) {
         console.error('Error saving comment:', err)
