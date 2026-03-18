@@ -1,14 +1,25 @@
 <template>
   <q-page class="flex flex-center bg-white">
-    <q-card class="login-card q-pa-lg q-ma-sm" flat>
+    <q-card class="login-card q-pa-lg q-ma-sm" :flat="isMobile">
       <!-- App Logo / Title -->
       <div class="text-center q-mb-lg">
-        <div class="text-h5 text-weight-bold text-primary">inTIME</div>
+        <!-- <q-img
+          src="../../assets/logo/intimelogo3.png"
+          spinner-color="white"
+          style="height: 140px; max-width: 150px"
+        /> -->
+        <q-img
+          src="../../assets/logo/intimetext.png"
+          spinner-color="white"
+          style="height: 30px; max-width: 200px"
+        />
         <div class="text-caption text-grey">Task - Track - Collaborate</div>
+        <!-- <div class="text-h5 text-weight-bold text-primary">inTIME</div>
+      <div class="text-caption text-grey">Task - Track - Collaborate</div> -->
       </div>
 
       <!-- Login Form -->
-      <q-form @submit.prevent="login" class="q-gutter-md">
+      <q-form @submit.prevent="login" class="q-gutter-md q-mt-sm">
         <q-input
           v-model="mobile"
           label="Mobile Number"
@@ -94,7 +105,11 @@ export default {
       loading: false,
     }
   },
-
+  computed: {
+    isMobile() {
+      return this.$q.screen.lt.md
+    },
+  },
   methods: {
     async login() {
       try {

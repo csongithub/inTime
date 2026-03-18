@@ -1,16 +1,27 @@
 <template>
   <q-page class="flex flex-center bg-white">
-    <q-card class="signup-card q-pa-lg" flat>
+    <q-card class="signup-card q-pa-lg" :flat="isMobile">
       <!-- Header -->
       <div class="text-center q-mb-lg">
-        <div class="text-h5 text-weight-bold text-primary">inTIME</div>
+        <!-- <q-img
+          src="../../assets/logo/intimelogo3.png"
+          spinner-color="white"
+          style="height: 140px; max-width: 150px"
+        /> -->
+        <q-img
+          src="../../assets/logo/intimetext.png"
+          spinner-color="white"
+          style="height: 30px; max-width: 200px"
+        />
+        <div class="text-caption text-grey">Task - Track - Collaborate</div>
+        <!-- <div class="text-h5 text-weight-bold text-primary">inTIME</div>
         <div class="text-caption text-grey">
           Join inTIME to manage and track your tasks in realtime
-        </div>
+        </div> -->
       </div>
 
       <!-- Signup Form -->
-      <q-form @submit.prevent="doSignup" class="q-gutter-md">
+      <q-form @submit.prevent="doSignup" class="q-gutter-md q-mt-sm">
         <!-- Name -->
         <q-input
           v-model="name"
@@ -112,6 +123,9 @@ export default {
   },
 
   computed: {
+    isMobile() {
+      return this.$q.screen.lt.md
+    },
     mobileRules() {
       return [
         (val) => !!val || 'Mobile is required',
