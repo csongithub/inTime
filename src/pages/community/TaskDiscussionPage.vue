@@ -109,7 +109,7 @@ import TaskCard from 'src/components/task/TaskCard.vue'
 import { db } from 'src/boot/firebase'
 import { ref as dbRef, onValue, get, push, set, onChildAdded } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
-import { notifyMention } from 'src/helpers/NotificationHelpers'
+import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
 
 export default {
   name: 'TaskDiscussionPage',
@@ -276,7 +276,7 @@ export default {
             ...snapshot.val(),
           }
         } else {
-          console.log('Task not found')
+          console.log('User not found')
         }
       })
     },
@@ -354,8 +354,9 @@ export default {
         })
 
         await set(newCommentRef, comment)
+        this.newComment = ''
 
-        //Send Notification
+        //Send Notification to menited users
         const mentionedUserIds = this.extractMentions(textForStorage)
 
         await notifyMention({
@@ -364,9 +365,7 @@ export default {
           communityId: this.communityId,
           fromUser: this.currentUser,
         })
-
-        //Re-Initialize the comment model
-        this.newComment = ''
+        this.notifyAllMembers()
       } catch (err) {
         console.error('Error saving comment:', err)
       }
@@ -378,7 +377,21 @@ export default {
         }
       })
     },
+    async notifyAllMembers() {
+      // 2️⃣ Get member IDs
+      const membersSnap = await get(dbRef(db, `communityMembers/${this.communityId}`))
+      if (!membersSnap.exists()) {
+        return
+      }
+      const memberIds = Object.keys(membersSnap.val())
+      const members = memberIds.filter((memberId) => memberId !== this.currentUser.id)
 
+      await notifyComment({
+        userIds: members,
+        taskId: this.taskId,
+        fromUser: this.currentUser,
+      })
+    },
     formatDate(timestamp) {
       return new Date(timestamp).toLocaleString(undefined, {
         day: '2-digit',

@@ -95,6 +95,7 @@
         </q-item>
       </q-list>
     </div>
+    <!-- {{ JSON.stringify(searchedUser.uid) }} -->
   </q-page>
 </template>
 
@@ -102,6 +103,7 @@
 import { getDatabase, ref, get, set } from 'firebase/database'
 import { auth } from 'boot/firebase'
 import { getAvatarColor } from 'src/services/CommonUtils'
+import { notifyCommunityAdd } from 'src/helpers/NotificationHelpers'
 
 export default {
   name: 'UsersPage',
@@ -116,13 +118,24 @@ export default {
       searchedUser: null,
       members: [],
       mobileNotRegistered: false,
+      communityName: '',
     }
   },
   mounted() {
+    this.fetchCommunity()
     this.fetchMembers()
   },
 
   methods: {
+    async fetchCommunity() {
+      const db = getDatabase()
+      const communityId = this.$route.params.id
+
+      const snapshot = await get(ref(db, 'communities/' + communityId))
+      if (snapshot.exists()) {
+        this.communityName = snapshot.val().name
+      }
+    },
     discardInvite() {
       this.mobileNotRegistered = false
     },
@@ -180,6 +193,12 @@ export default {
       this.$q.notify({
         type: 'positive',
         message: 'User added successfully',
+      })
+
+      //Notify the user
+      await notifyCommunityAdd({
+        userId: this.searchedUser.uid,
+        communityName: this.communityName,
       })
 
       this.searchedUser = null

@@ -38,7 +38,11 @@ import { useTaskStore } from 'src/stores/taskStore'
 import TaskCard from '../../components/task/TaskCard.vue'
 import TaskFormDialog from '../../components/task/TaskFormDialog.vue'
 import event from 'src/utils/eventBus'
+import { notifyTaskAssigned } from 'src/helpers/NotificationHelpers'
 
+import { db } from 'src/boot/firebase'
+import { ref, onValue } from 'firebase/database'
+import { getAuth } from 'firebase/auth'
 export default {
   components: { TaskCard, TaskFormDialog },
 
@@ -47,6 +51,10 @@ export default {
       communityId: this.$route.params.id,
       dialog: false,
       selectedTask: null,
+      currentUser: {
+        id: 'user123',
+        name: 'Chandan',
+      },
     }
   },
 
@@ -56,9 +64,10 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
     event.on('open-create-task', this.openCreate)
     this.taskStore.subscribe(this.communityId)
+    this.getCurrentUser()
   },
 
   beforeUnmount() {
@@ -67,6 +76,23 @@ export default {
   },
 
   methods: {
+    getCurrentUser() {
+      const auth = getAuth()
+      const user = auth.currentUser
+
+      const userRef = ref(db, `users/${user.uid}`)
+      onValue(userRef, (snapshot) => {
+        if (snapshot.exists()) {
+          this.currentUser = {
+            id: user.uid,
+            ...snapshot.val(),
+          }
+          console.log(JSON.stringify(this.currentUser))
+        } else {
+          console.log('User not found')
+        }
+      })
+    },
     openCreate() {
       this.selectedTask = null
       this.dialog = true
@@ -85,7 +111,15 @@ export default {
       if (this.selectedTask) {
         await this.taskStore.update(this.communityId, this.selectedTask.id, form)
       } else {
-        await this.taskStore.create(this.communityId, form)
+        const taskId = await this.taskStore.create(this.communityId, form)
+
+        //Send Notification
+
+        notifyTaskAssigned({
+          userId: form.assigneeId,
+          taskId: taskId,
+          fromUser: this.currentUser,
+        })
       }
 
       this.dialog = false
