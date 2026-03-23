@@ -23,7 +23,7 @@
       </div>
 
       <q-list v-else bordered separator>
-        <q-item v-for="comment in comments" :key="comment.id">
+        <q-item v-for="comment in comments" :key="comment.id" :id="`comment-${comment.id}`">
           <q-item-section avatar>
             <q-avatar color="primary" text-color="white">
               {{ comment.userName.charAt(0) }}
@@ -39,9 +39,6 @@
               {{ formatDate(comment.createdAt) }}
             </q-item-label>
 
-            <!-- <q-item-label caption class="q-mt-xs comment-text">
-              {{ comment.text }}
-            </q-item-label> -->
             <q-item-label caption class="q-mt-xs comment-text text-black">
               <span v-html="formatComment(comment.text)"></span>
             </q-item-label>
@@ -117,7 +114,11 @@ export default {
   components: {
     TaskCard,
   },
-  watch: {},
+  watch: {
+    comments() {
+      this.scrollToComment()
+    },
+  },
 
   data() {
     return {
@@ -151,6 +152,7 @@ export default {
     this.loadComments()
     this.getCurrentUser()
     this.fetchMembers()
+    this.scrollToComment()
   },
 
   methods: {
@@ -356,7 +358,7 @@ export default {
         await set(newCommentRef, comment)
         this.newComment = ''
 
-        //Send Notification to menited users
+        //Notify mentioned Users
         const mentionedUserIds = this.extractMentions(textForStorage)
 
         await notifyMention({
@@ -364,8 +366,9 @@ export default {
           taskId: this.taskId,
           communityId: this.communityId,
           fromUser: this.currentUser,
+          commentId: newCommentRef.key,
         })
-        this.notifyAllMembers()
+        this.notifyAllMembers(newCommentRef.key)
       } catch (err) {
         console.error('Error saving comment:', err)
       }
@@ -377,7 +380,7 @@ export default {
         }
       })
     },
-    async notifyAllMembers() {
+    async notifyAllMembers(commentId) {
       // 2️⃣ Get member IDs
       const membersSnap = await get(dbRef(db, `communityMembers/${this.communityId}`))
       if (!membersSnap.exists()) {
@@ -389,7 +392,9 @@ export default {
       await notifyComment({
         userIds: members,
         taskId: this.taskId,
+        communityId: this.communityId,
         fromUser: this.currentUser,
+        commentId: commentId,
       })
     },
     formatDate(timestamp) {
@@ -398,6 +403,36 @@ export default {
         month: 'short',
         hour: '2-digit',
         minute: '2-digit',
+      })
+    },
+    scrollToComment(retry = 0) {
+      const commentId = this.$route.query.commentId
+      if (!commentId) return
+
+      this.$nextTick(() => {
+        const el = document.getElementById(`comment-${commentId}`)
+        const container = document.querySelector('.your-scroll-container')
+
+        console.log('Looking for:', `comment-${commentId}`)
+        console.log('Element:', document.getElementById(`comment-${commentId}`))
+        if (el && container) {
+          container.scrollTop = el.offsetTop - 100
+        }
+        if (el) {
+          el.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          })
+
+          // highlight
+          el.style.background = '#e3f2fd'
+          setTimeout(() => (el.style.background = ''), 2000)
+        } else if (retry < 10) {
+          // ⏳ retry until comments load
+          setTimeout(() => {
+            this.scrollToComment(retry + 1)
+          }, 300)
+        }
       })
     },
   },

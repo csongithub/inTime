@@ -18,35 +18,70 @@
   </q-item>
 </template>
 
-<script setup>
+<script>
 import { db } from 'boot/firebase'
-import { useNotificationStore } from 'src/stores/notificationStore'
+import { ref, update } from 'firebase/database'
+import { auth } from 'src/firebase'
 
-const props = defineProps({
-  notification: Object,
-})
+export default {
+  name: 'NotificationItem',
 
-const store = useNotificationStore()
+  props: {
+    notification: {
+      type: Object,
+      required: true,
+    },
+  },
 
-// 🎯 Dynamic icon based on type
-const iconMap = {
-  MENTION: 'alternate_email',
-  TASK_ASSIGNED: 'assignment_ind',
-  COMMENT: 'chat',
-  COMMUNITY_ADDED: 'group',
-}
+  computed: {
+    // 🎯 Dynamic icon based on type
+    icon() {
+      const iconMap = {
+        MENTION: 'alternate_email',
+        TASK_ASSIGNED: 'assignment_ind',
+        COMMENT: 'chat',
+        COMMUNITY_ADDED: 'group',
+      }
 
-const icon = iconMap[props.notification.type] || 'notifications'
+      return iconMap[this.notification.type] || 'notifications'
+    },
+  },
 
-// 📌 Handle click
-const handleClick = async () => {
-  const uid = store.$state?.currentUserId || 'yourUserId'
+  methods: {
+    // 📌 Handle click
+    async handleClick() {
+      const uid = auth.currentUser.uid
+      const notificationId = this.notification.id
 
-  // mark as read
-  await db.ref(`notifications/${uid}/${props.notification.id}`).update({
-    read: true,
-  })
+      try {
+        // mark as read
+        await update(ref(db, `notifications/${uid}/${notificationId}`), { read: true })
 
-  // TODO: navigate to task (next step)
+        // TODO: navigate to task (next step)
+        // ✅ Step 1: Navigate to task page
+
+        let path = `/community/${this.notification.communityId}`
+
+        if (
+          this.notification.type === 'MENTION' ||
+          this.notification.type === 'COMMENT' ||
+          this.notification.type === 'TASK_ASSIGNED'
+        ) {
+          path = path + `/task/${this.notification.entityId}/discussion`
+        } else if (this.notification.type === 'COMMUNITY_ADDED') {
+          path = path + `/users`
+        }
+
+        this.$router.push({
+          path: path,
+          query: {
+            commentId: this.notification.commentId,
+          },
+        })
+      } catch (err) {
+        console.error('Error updating notification:', err)
+      }
+    },
+  },
 }
 </script>

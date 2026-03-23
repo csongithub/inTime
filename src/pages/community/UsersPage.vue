@@ -199,6 +199,7 @@ export default {
       await notifyCommunityAdd({
         userId: this.searchedUser.uid,
         communityName: this.communityName,
+        communityId: communityId,
       })
 
       this.searchedUser = null

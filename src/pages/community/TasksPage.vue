@@ -118,6 +118,7 @@ export default {
         notifyTaskAssigned({
           userId: form.assigneeId,
           taskId: taskId,
+          communityId: this.communityId,
           fromUser: this.currentUser,
         })
       }
