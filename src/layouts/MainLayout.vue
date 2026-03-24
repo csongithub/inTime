@@ -37,56 +37,77 @@
   </q-layout>
 </template>
 
-<script setup>
-import { onMounted } from 'vue'
-import { ref } from 'vue'
+<script>
 import { logout } from '../services/AuthService'
-import { useRouter } from 'vue-router'
 import { useUserStore } from 'src/stores/user'
-import { ref as dbRef, get } from 'firebase/database'
-import { auth, db } from 'boot/firebase'
 import { useNotificationStore } from 'src/stores/notificationStore'
+import { auth, db } from 'boot/firebase'
+import { ref as dbRef, get } from 'firebase/database'
 
 import NotificationBell from 'src/components/notification/NotificationBell.vue'
+import FCMService from 'src/services/FCMService'
 
-const userStore = useUserStore()
-const router = useRouter()
-const leftDrawerOpen = ref(false)
-const notificationStore = useNotificationStore()
+export default {
+  name: 'MainLayout',
 
-onMounted(() => {
-  const uid = auth.currentUser.uid
+  components: {
+    NotificationBell,
+  },
 
-  //Start Notification Listerner
-  notificationStore.startListener(uid)
-
-  //Set Current User
-  auth.onAuthStateChanged(async (user) => {
-    if (user) {
-      const snapshot = await get(dbRef(db, `users/${uid}`))
-
-      const user = snapshot.val()
-      if (snapshot.exists()) {
-        userStore.setUser({
-          uid: uid,
-          name: user.name,
-          mobile: user.mobile,
-        })
-      } else {
-        userStore.clearUser()
-      }
+  data() {
+    return {
+      leftDrawerOpen: false,
     }
-  })
-})
+  },
 
-function toggleLeftDrawer() {
-  leftDrawerOpen.value = !leftDrawerOpen.value
-}
+  computed: {
+    userStore() {
+      return useUserStore()
+    },
+    notificationStore() {
+      return useNotificationStore()
+    },
+  },
 
-async function doLogout() {
-  notificationStore.stopListener()
-  await logout()
-  userStore.clearUser()
-  router.push('/')
+  mounted() {
+    const uid = auth.currentUser.uid
+
+    //Initatite Firebase Cloud Messaging
+    FCMService.init(uid)
+
+    // Start Notification Listener
+    this.notificationStore.startListener(uid)
+
+    // Set Current User
+    auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const snapshot = await get(dbRef(db, `users/${uid}`))
+
+        const user = snapshot.val()
+        if (snapshot.exists()) {
+          this.userStore.setUser({
+            uid: uid,
+            name: user.name,
+            mobile: user.mobile,
+          })
+        } else {
+          this.userStore.clearUser()
+        }
+      }
+    })
+  },
+
+  methods: {
+    toggleLeftDrawer() {
+      this.leftDrawerOpen = !this.leftDrawerOpen
+    },
+
+    async doLogout() {
+      this.notificationStore.stopListener()
+      await logout()
+      this.userStore.clearUser()
+      this.$router.push('/')
+    },
+  },
 }
 </script>

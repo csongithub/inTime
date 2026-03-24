@@ -10,6 +10,7 @@ export const notifyMention = async ({ userIds, taskId, communityId, fromUser, co
     communityId,
     fromUserId: fromUser.id,
     commentId,
+    body: `${fromUser.name} mentioned you ` + `in Task ${taskId}`,
   })
 }
 
@@ -23,6 +24,7 @@ export const notifyComment = async ({ userIds, taskId, communityId, fromUser, co
     fromUserId: fromUser.id,
     communityId,
     commentId,
+    body: `${fromUser.name} commented ` + `on Task ${taskId}`,
   })
 }
 
@@ -35,6 +37,7 @@ export const notifyTaskAssigned = async ({ userId, taskId, communityId, fromUser
     entityId: taskId,
     fromUserId: fromUser.id,
     communityId,
+    body: `${fromUser.name} assigned you a task ` + `Task ${taskId}`,
   })
 }
 
@@ -45,5 +48,6 @@ export const notifyCommunityAdd = async ({ userId, communityName, communityId })
     title: `You were added to community`,
     message: communityName,
     communityId,
+    body: `You were added to community ${communityName}`,
   })
 }

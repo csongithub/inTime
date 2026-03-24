@@ -2,6 +2,7 @@ import { boot } from 'quasar/wrappers'
 import { initializeApp } from 'firebase/app'
 import { getDatabase } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
+import { getMessaging } from 'firebase/messaging'
 
 const firebaseConfig = {
   apiKey: 'AIzaSyBp9myCoK_SV4Y3sirL0gRsNn4cCr8OdI4',
@@ -17,5 +18,6 @@ const app = initializeApp(firebaseConfig)
 
 export const db = getDatabase(app)
 export const auth = getAuth(app)
+export const messaging = getMessaging(app)
 
 export default boot(() => {})
