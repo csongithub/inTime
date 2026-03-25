@@ -358,16 +358,9 @@ export default {
         await set(newCommentRef, comment)
         this.newComment = ''
 
-        //Notify mentioned Users
+        //Send Notification
         const mentionedUserIds = this.extractMentions(textForStorage)
-
-        await notifyMention({
-          userIds: mentionedUserIds,
-          taskId: this.taskId,
-          communityId: this.communityId,
-          fromUser: this.currentUser,
-          commentId: newCommentRef.key,
-        })
+        this.notifyMentionedMembers(mentionedUserIds, newCommentRef.key)
         this.notifyAllMembers(newCommentRef.key)
       } catch (err) {
         console.error('Error saving comment:', err)
@@ -379,6 +372,16 @@ export default {
           container.scrollTop = container.scrollHeight
         }
       })
+    },
+    async notifyMentionedMembers(mentionedUserIds, commentId) {
+      if (mentionedUserIds.length > 0)
+        await notifyMention({
+          userIds: mentionedUserIds,
+          taskId: this.taskId,
+          communityId: this.communityId,
+          fromUser: this.currentUser,
+          commentId: commentId,
+        })
     },
     async notifyAllMembers(commentId) {
       // 2️⃣ Get member IDs
