@@ -8,11 +8,50 @@ import { ref as dbRef, get } from 'firebase/database'
 export const useTaskStore = defineStore('taskStore', {
   state: () => ({
     tasks: [],
+    filteredTasks: [],
     unsubscribe: null,
     loading: false,
   }),
 
   getters: {
+    /**
+     * Generic filtered tasks getter
+     */
+    getTasks: (state) => {
+      return (filters = {}) => {
+        // This is for all task (by defalt filter)
+        let result = [...state.tasks]
+
+        // const currentUserId = auth.currentUser?.uid
+
+        // 🔹 Member Filter
+        if (filters.memberId && filters.memberId !== 'all') {
+          result = result.filter((t) => t.assigneeId === filters.memberId)
+        }
+
+        // 🔹 Task Filter
+        switch (filters.type) {
+          case 'not started':
+            result = result.filter((t) => t.status === 'Not Started')
+            break
+          case 'started':
+            result = result.filter(
+              (t) => t.status === 'Started' || t.status === 'Restarted' || t.status === 'Resumed',
+            )
+            break
+
+          case 'blocked':
+            result = result.filter((t) => t.status === 'Blocked')
+            break
+
+          case 'completed':
+            result = result.filter((t) => t.status === 'Completed')
+            break
+        }
+
+        return result
+      }
+    },
     myTasks: (state) => state.tasks.filter((t) => t.assigneeId === auth.currentUser?.uid),
 
     createdByMe: (state) => state.tasks.filter((t) => t.creatorId === auth.currentUser?.uid),

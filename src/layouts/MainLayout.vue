@@ -1,6 +1,6 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated reveal class="bg-primary text-white q-pt-lg">
+    <q-header elevated reveal class="bg-white text-primary q-pt-lg">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 

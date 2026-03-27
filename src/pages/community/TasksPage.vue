@@ -1,12 +1,38 @@
 <template>
   <q-page class="">
-    <!-- <div class="row q-gutter-sm q-mb-md">
-      <q-chip clickable color="primary" text-color="white">My Tasks</q-chip>
-      <q-chip clickable outline>Started</q-chip>
-      <q-chip clickable outline>Completed</q-chip>
-    </div> -->
-    <div class="row q-col-gutter-md q-mt-md">
-      <div class="col-12 col-md-6 col-lg-4" v-for="task in taskStore.tasks" :key="task.id">
+    <!-- 🔹 Member Filters -->
+    <div class="q-mt-xs row no-wrap scroll hide-scrollbar items-center q-gutter-sm">
+      <q-chip
+        v-for="member in members"
+        :key="member.id"
+        clickable
+        :class="selectedMember === member.uid ? 'chip-active' : 'chip-inactive'"
+        @click="selectedMember = member.uid"
+      >
+        <!-- <q-avatar size="24px">
+          {{ member.name.charAt(0) }}
+        </q-avatar> -->
+        {{ member.name }}
+      </q-chip>
+    </div>
+    <div class="q-mt-xs row no-wrap scroll hide-scrollbar items-center q-gutter-sm">
+      <q-chip
+        v-for="chip in filters"
+        :key="chip.value"
+        clickable
+        :class="selectedFilter === chip.value ? 'chip-active' : 'chip-inactive'"
+        @click="selectedFilter = chip.value"
+      >
+        <q-icon :name="statusIcon(chip.label)" :color="statusColor(chip.label)" class="q-mr-sm" />
+        {{ chip.label }}
+      </q-chip>
+    </div>
+
+    <q-page v-if="filteredTasks.length === 0" class="flex flex-center column fit">
+      <div>No Task found</div>
+    </q-page>
+    <div class="row q-col-gutter-md q-mt-xs">
+      <div class="col-12 col-md-6 col-lg-4" v-for="task in filteredTasks" :key="task.id">
         <TaskCard
           :task="task"
           @edit="openEdit"
@@ -41,7 +67,7 @@ import event from 'src/utils/eventBus'
 import { notifyTaskAssigned } from 'src/helpers/NotificationHelpers'
 
 import { db } from 'src/boot/firebase'
-import { ref, onValue } from 'firebase/database'
+import { ref, onValue, get } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
 export default {
   components: { TaskCard, TaskFormDialog },
@@ -49,12 +75,23 @@ export default {
   data() {
     return {
       communityId: this.$route.params.id,
+
       dialog: false,
       selectedTask: null,
       currentUser: {
         id: 'user123',
         name: 'Chandan',
       },
+
+      selectedFilter: 'started',
+      selectedMember: null,
+      members: [],
+      filters: [
+        { label: 'Not Started', value: 'not started' },
+        { label: 'Started', value: 'started' }, //Started, Resumed, Restarted
+        { label: 'Blocked', value: 'blocked' },
+        { label: 'Completed', value: 'completed' },
+      ],
     }
   },
 
@@ -62,12 +99,23 @@ export default {
     taskStore() {
       return useTaskStore()
     },
-  },
 
+    filteredTasks() {
+      return useTaskStore().getTasks({
+        type: this.selectedFilter,
+        memberId: this.selectedMember,
+      })
+    },
+  },
+  created() {},
   async mounted() {
+    this.fetchMembers()
     event.on('open-create-task', this.openCreate)
-    this.taskStore.subscribe(this.communityId)
+    useTaskStore().subscribe(this.communityId)
     this.getCurrentUser()
+    this.selectedMember = getAuth().currentUser.uid
+    this.tasks = this.taskStore.tasks
+    this.filteredTasks = this.tasks
   },
 
   beforeUnmount() {
@@ -76,6 +124,61 @@ export default {
   },
 
   methods: {
+    statusIcon(status) {
+      const map = {
+        'Not Started': 'hourglass_empty',
+        Started: 'play_arrow',
+        Blocked: 'block',
+        Completed: 'check_circle',
+      }
+      return map[status]
+    },
+    statusColor(status) {
+      const map = {
+        'Not Started': 'grey',
+        Started: 'purple',
+        Blocked: 'red',
+        Completed: 'green',
+      }
+      return map[status]
+    },
+    async fetchMembers() {
+      const membersSnap = await get(ref(db, `communityMembers/${this.$route.params.id}`))
+      if (!membersSnap.exists()) {
+        this.members = []
+        return
+      }
+
+      const memberIds = Object.keys(membersSnap.val())
+
+      // 3️⃣ Fetch only required users in parallel
+      const memberPromises = memberIds.map(async (uid) => {
+        const userSnap = await get(ref(db, `users/${uid}`))
+        if (!userSnap.exists()) return null
+
+        return {
+          uid,
+          ...userSnap.val(),
+        }
+      })
+
+      // 4️⃣ Wait for all users to load
+      const members = await Promise.all(memberPromises)
+
+      // 5️⃣ Remove null values (if any user missing)
+      this.members = members.filter((member) => member !== null)
+
+      //Shift the current user at begining
+      const currentUserId = getAuth().currentUser.uid
+      const index = this.members.findIndex((m) => m.id === currentUserId)
+      if (index > -1) {
+        const [movedItem] = this.members.splice(index, 1) // splice returns an array of removed items
+        this.members.unshift(movedItem)
+      }
+
+      this.members.unshift({ uid: 'all', name: 'All' })
+    },
+
     getCurrentUser() {
       const auth = getAuth()
       const user = auth.currentUser
@@ -145,5 +248,15 @@ export default {
 
 .premium-fab:hover {
   transform: scale(1.1);
+}
+
+.chip-active {
+  background: var(--q-primary);
+  color: white;
+}
+
+.chip-inactive {
+  background: rgba(25, 118, 210, 0.1); /* light primary */
+  color: var(--q-primary);
 }
 </style>
