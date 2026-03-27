@@ -8,6 +8,7 @@
         clickable
         :class="selectedMember === member.uid ? 'chip-active' : 'chip-inactive'"
         @click="selectedMember = member.uid"
+        square
       >
         <!-- <q-avatar size="24px">
           {{ member.name.charAt(0) }}
