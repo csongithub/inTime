@@ -1,14 +1,13 @@
 <template>
   <q-layout view="hHh lpR fFf">
-    <q-header elevated reveal class="bg-white text-primary q-pt-lg">
+    <q-header elevated reveal class="bg-primary text-white q-pt-xl">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title> inTIME</q-toolbar-title>
         <q-btn
-          label="New"
+          label="New Team"
           no-caps
-          flat
           class="glass-btn q-px-md q-ml-sm"
           @click="openCreateCommunity"
         />
@@ -121,3 +120,12 @@ export default {
   },
 }
 </script>
+<style scoped>
+.glass-btn {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 500;
+}
+</style>

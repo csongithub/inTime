@@ -1,7 +1,7 @@
 <template>
   <q-layout view="hHh lpR fFf">
     <!-- Header -->
-    <q-header elevated reveal class="bg-white text-primary q-pt-lg">
+    <q-header elevated reveal class="bg-primary text-white q-pt-xl">
       <q-toolbar>
         <q-btn flat dense icon="arrow_back" @click="goBack" />
         <q-toolbar-title>
@@ -94,10 +94,10 @@ export default {
 
 <style scoped>
 .glass-btn {
-  background: rgba(254, 254, 254, 0.2);
-  /* backdrop-filter: blur(6px); */
-  /* border: 1px solid rgba(98, 131, 145, 0.3); */
-  color: rgb(98, 112, 165);
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
   font-weight: 500;
 }
 </style>

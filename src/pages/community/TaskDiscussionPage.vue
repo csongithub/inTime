@@ -1,7 +1,7 @@
 <template>
   <q-page class="column full-height">
     <!-- HEADER -->
-    <q-header elevated reveal class="bg-primary text-white q-pt-lg">
+    <q-header elevated reveal class="bg-white text-primary q-pt-xl">
       <q-toolbar>
         <q-btn flat dense round icon="arrow_back" @click="goBack" />
 
@@ -282,6 +282,7 @@ export default {
       })
     },
     goBack() {
+      // this.$router.push(`/community/${this.communityId}/tasks`)
       this.$router.back()
     },
 

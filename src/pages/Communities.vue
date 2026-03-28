@@ -13,7 +13,7 @@
               dense
               outlined
               v-model="search"
-              placeholder="Search communities..."
+              placeholder="Search team..."
               debounce="300"
               clearable
             >
@@ -169,7 +169,7 @@ export default {
     openDialog() {
       this.$q
         .dialog({
-          message: 'New Community:',
+          message: 'New Team:',
           prompt: {
             model: '',
             type: 'text', // optional
