@@ -9,7 +9,7 @@
   >
     <q-layout view="hHh lpR fFf" container class="bg-white">
       <!-- Header -->
-      <q-header elevated reveal class="bg-white text-primary q-pt-lg">
+      <q-header elevated reveal class="bg-primary text-white q-pt-xl">
         <q-toolbar>
           <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
           <q-toolbar-title> Create Task </q-toolbar-title>

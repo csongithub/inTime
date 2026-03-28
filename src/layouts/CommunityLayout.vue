@@ -92,12 +92,4 @@ export default {
 }
 </script>
 
-<style scoped>
-.glass-btn {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  font-weight: 500;
-}
-</style>
+<style scoped></style>

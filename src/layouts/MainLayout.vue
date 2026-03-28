@@ -4,13 +4,14 @@
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
-        <q-toolbar-title> inTIME</q-toolbar-title>
-        <q-btn
-          label="New Team"
-          no-caps
-          class="glass-btn q-px-md q-ml-sm"
-          @click="openCreateCommunity"
-        />
+        <q-toolbar-title>
+          inTIME<q-btn
+            label="New Team"
+            no-caps
+            class="glass-btn q-px-md q-ml-xs"
+            @click="openCreateCommunity"
+        /></q-toolbar-title>
+
         <!-- 🔔 Notification Bell -->
         <NotificationBell />
       </q-toolbar>
@@ -120,12 +121,4 @@ export default {
   },
 }
 </script>
-<style scoped>
-.glass-btn {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(6px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: white;
-  font-weight: 500;
-}
-</style>
+<style scoped></style>

@@ -1,6 +1,6 @@
 <template>
   <q-page v-if="communities.length === 0" class="flex flex-center column fit">
-    <div>No Community found</div>
+    <div>No Team found</div>
     <div>Please create one, or ask someone to add you</div>
   </q-page>
   <q-page v-else class="column fit scroll">
