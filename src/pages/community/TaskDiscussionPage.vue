@@ -8,11 +8,10 @@
         <q-toolbar-title> {{ taskId }} </q-toolbar-title>
       </q-toolbar>
     </q-header>
+    <!-- TASK CARD -->
     <div class="q-mt-sm">
       <TaskCard v-if="task" :task="task" />
     </div>
-
-    <!-- TASK CARD -->
 
     <q-separator />
 
@@ -119,7 +118,7 @@ export default {
       this.scrollToComment()
     },
   },
-
+  computed: {},
   data() {
     return {
       task: null,
@@ -289,14 +288,17 @@ export default {
     async loadTask() {
       try {
         const taskRef = dbRef(db, `tasks/${this.communityId}/${this.taskId}`)
-
-        onValue(taskRef, (snapshot) => {
+        onValue(taskRef, async (snapshot) => {
           if (snapshot.exists()) {
             this.task = {
               id: this.taskId,
+
               ...snapshot.val(),
               discussion: true,
             }
+            const user = (await get(dbRef(db, `users/${this.task.assigneeId}`))).val()
+            this.task['assigneeName'] = user.name
+            console.log('Task Details' + JSON.stringify(this.task))
           } else {
             console.log('Task not found')
           }

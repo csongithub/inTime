@@ -17,7 +17,7 @@ export const useTaskStore = defineStore('taskStore', {
     /**
      * Generic filtered tasks getter
      */
-    getTasks: (state) => {
+    filteredTasks: (state) => {
       return (filters = {}) => {
         // This is for all task (by defalt filter)
         let result = [...state.tasks]

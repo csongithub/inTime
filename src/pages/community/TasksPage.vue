@@ -101,7 +101,7 @@ export default {
     },
 
     filteredTasks() {
-      return useTaskStore().getTasks({
+      return useTaskStore().filteredTasks({
         type: this.selectedFilter,
         memberId: this.selectedMember,
       })
@@ -114,8 +114,6 @@ export default {
     useTaskStore().subscribe(this.communityId)
     this.getCurrentUser()
     this.selectedMember = 'all'
-    this.tasks = this.taskStore.tasks
-    this.filteredTasks = this.tasks
   },
 
   beforeUnmount() {
