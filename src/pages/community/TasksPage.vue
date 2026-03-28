@@ -234,6 +234,7 @@ export default {
           taskId: task.id,
         },
       })
+      // this.$router.push(`/community/${this.communityId}/task/${task.id}`)
     },
   },
 }

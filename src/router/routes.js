@@ -46,8 +46,15 @@ const routes = [
         name: 'users',
         component: () => import('pages/community/UsersPage.vue'),
       },
+    ],
+  },
+  {
+    path: '/community/:communityId/task/:taskId',
+    component: () => import('layouts/TaskDiscussionLayout.vue'),
+    props: true,
+    children: [
       {
-        path: '/community/:communityId/task/:taskId/discussion',
+        path: '',
         name: 'task-discussion',
         component: () => import('pages/community/TaskDiscussionPage.vue'),
       },

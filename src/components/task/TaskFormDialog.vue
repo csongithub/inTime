@@ -12,7 +12,8 @@
       <q-header elevated reveal class="bg-primary text-white q-pt-xl">
         <q-toolbar>
           <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
-          <q-toolbar-title> Create Task </q-toolbar-title>
+          <q-toolbar-title> New Task </q-toolbar-title>
+          <!-- <q-btn flat dense @click="dialogModel = false" label="close" /> -->
         </q-toolbar>
       </q-header>
       <q-page-container>
