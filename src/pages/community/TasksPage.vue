@@ -6,13 +6,12 @@
         v-for="member in members"
         :key="member.id"
         clickable
-        :class="selectedMember === member.uid ? 'chip-active' : 'chip-inactive'"
+        :class="selectedMember === member.uid ? 'member_chip-active' : 'member_chip-inactive'"
         @click="selectedMember = member.uid"
         square
       >
-        <!-- <q-avatar size="24px">
-          {{ member.name.charAt(0) }}
-        </q-avatar> -->
+        <q-icon :name="member.name === 'All' ? 'group' : 'person'" class="q-mr-sm" />
+
         {{ member.name }}
       </q-chip>
     </div>
@@ -114,7 +113,7 @@ export default {
     event.on('open-create-task', this.openCreate)
     useTaskStore().subscribe(this.communityId)
     this.getCurrentUser()
-    this.selectedMember = getAuth().currentUser.uid
+    this.selectedMember = 'all'
     this.tasks = this.taskStore.tasks
     this.filteredTasks = this.tasks
   },
@@ -257,6 +256,16 @@ export default {
 }
 
 .chip-inactive {
+  background: rgba(25, 118, 210, 0.1); /* light primary */
+  color: var(--q-primary);
+}
+
+.member_chip-active {
+  background: var(--q-primary);
+  color: white;
+}
+
+.member_chip-inactive {
   background: rgba(25, 118, 210, 0.1); /* light primary */
   color: var(--q-primary);
 }

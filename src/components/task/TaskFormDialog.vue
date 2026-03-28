@@ -9,7 +9,7 @@
   >
     <q-layout view="hHh lpR fFf" container class="bg-white">
       <!-- Header -->
-      <q-header elevated reveal class="bg-primary text-white q-pt-lg">
+      <q-header elevated reveal class="bg-white text-primary q-pt-lg">
         <q-toolbar>
           <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
           <q-toolbar-title> Create Task </q-toolbar-title>
@@ -17,20 +17,7 @@
       </q-header>
       <q-page-container>
         <q-page class="q-pa-md">
-          <q-card class="dialog-card full-height column">
-            <!-- <q-card-section class="q-pt-lg row items-center justify-between bg-primary text-white">
-        <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
-        <div class="text-h6">
-          {{ editMode ? 'Update: ' + form.id : 'Task' }}
-        </div>
-      </q-card-section> -->
-            <!-- Dialog Header -->
-            <!-- <q-toolbar class="bg-primary text-white">
-        <q-btn flat dense icon="arrow_back" @click="dialogModel = false" />
-        <q-toolbar-title>Create Task</q-toolbar-title>
-      </q-toolbar> -->
-            <!-- <q-separator /> -->
-
+          <q-card class="dialog-card full-height column flat">
             <q-card-section class="scroll form-section">
               <q-input v-model="form.title" label="Task Title" outlined dense class="q-mb-md" />
 
@@ -51,15 +38,6 @@
                 dense
                 class="q-mb-md"
               />
-
-              <!-- <q-select
-          v-model="form.status"
-          :options="statuses"
-          label="Status"
-          outlined
-          dense
-          class="q-mb-md"
-        /> -->
 
               <q-input
                 v-model.number="form.anticipatedDays"
@@ -83,8 +61,8 @@
                 @filter="filterMembers"
                 clearable
                 dense
+                behavior="menu"
                 @update:model-value="setAssignedById"
-                :behavior="$q.screen.lt.md ? 'dialog' : ''"
               />
 
               <q-btn
@@ -113,10 +91,6 @@
 
             <q-separator />
             <q-btn class="q-ma-md" color="primary" label="Create" @click="saveTask" />
-            <!-- <q-card-actions align="right" class="q-pa-md">
-              <q-btn flat label="Cancel" @click="dialogModel = false" />
-              <q-btn color="primary" label="Create" @click="saveTask" />
-            </q-card-actions> -->
           </q-card>
         </q-page>
       </q-page-container>
@@ -268,7 +242,7 @@ export default {
 .dialog-card {
   width: 100%;
   max-width: 600px;
-  border-radius: 12px;
+  border-radius: 1px;
 }
 
 .form-section {

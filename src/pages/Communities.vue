@@ -69,9 +69,9 @@
       </q-list>
     </div>
   </q-page>
-  <q-page-sticky :offset="[18, 18]">
+  <!-- <q-page-sticky :offset="[18, 18]">
     <q-btn size="md" position="bottom-right" round color="primary" icon="add" @click="openDialog" />
-  </q-page-sticky>
+  </q-page-sticky> -->
 </template>
 
 <script>
@@ -80,7 +80,7 @@ import { db, auth } from 'boot/firebase'
 import { ref as dbRef, get } from 'firebase/database'
 import { createCommunity } from '../services/CommunityService'
 import { getAvatarColor } from 'src/services/CommonUtils'
-
+import event from 'src/utils/eventBus'
 export default {
   name: 'IndexPage',
   mixins: [],
@@ -90,7 +90,11 @@ export default {
   components: {},
   created() {},
   async mounted() {
+    event.on('open-create-community', this.openDialog)
     await this.loadCommunities()
+  },
+  beforeUnmount() {
+    event.off('open-create-community', this.openDialog)
   },
   computed: {
     filteredCommunities() {

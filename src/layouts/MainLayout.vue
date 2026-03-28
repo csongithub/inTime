@@ -5,7 +5,13 @@
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
 
         <q-toolbar-title> inTIME</q-toolbar-title>
-
+        <q-btn
+          label="New"
+          no-caps
+          flat
+          class="glass-btn q-px-md q-ml-sm"
+          @click="openCreateCommunity"
+        />
         <!-- 🔔 Notification Bell -->
         <NotificationBell />
       </q-toolbar>
@@ -43,6 +49,7 @@ import { useUserStore } from 'src/stores/user'
 import { useNotificationStore } from 'src/stores/notificationStore'
 import { auth, db } from 'boot/firebase'
 import { ref as dbRef, get } from 'firebase/database'
+import event from 'src/utils/eventBus'
 
 import NotificationBell from 'src/components/notification/NotificationBell.vue'
 import FCMService from 'src/services/FCMService'
@@ -98,6 +105,9 @@ export default {
   },
 
   methods: {
+    openCreateCommunity() {
+      event.emit('open-create-community')
+    },
     toggleLeftDrawer() {
       this.leftDrawerOpen = !this.leftDrawerOpen
     },

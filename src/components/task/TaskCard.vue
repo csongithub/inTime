@@ -10,18 +10,7 @@
             </div>
 
             <!-- RIGHT: ACTION BUTTONS -->
-            <div class="row items-center q-gutter-xs">
-              <!-- Edit -->
-              <!-- <q-btn
-                flat
-                dense
-                round
-                size="sm"
-                icon="edit"
-                color="grey-7"
-                @click.stop="$emit('edit', task)"
-              /> -->
-
+            <div v-if="!task.discussion" class="row items-center q-gutter-xs">
               <!-- Ellipsis -->
               <q-btn flat dense round size="sm" icon="more_vert" color="grey-7" @click.stop>
                 <q-menu auto-close>
@@ -202,7 +191,7 @@
         </q-circular-progress>
       </div>
       <!-- DISCUSSION -->
-      <div class="column items-start">
+      <div v-if="!task.discussion" class="column items-start">
         <div class="text-caption text-grey-7 text-weight-medium">Discussion</div>
 
         <q-btn
@@ -216,6 +205,11 @@
         />
       </div>
     </q-card-section>
+    <!-- <q-card-section>
+      <div class="q-mt-md">
+        <q-slider v-model="progress" :min="0" :max="100" label label-always class="q-mt-sm" />
+      </div>
+    </q-card-section> -->
   </q-card>
 </template>
 
@@ -232,6 +226,9 @@ export default {
     },
   },
   computed: {
+    progress() {
+      return this.task.progress
+    },
     enableStart() {
       return !!this.task.assigneeId && this.task.status === 'Not Started'
     },

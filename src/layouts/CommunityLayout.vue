@@ -95,7 +95,7 @@ export default {
 <style scoped>
 .glass-btn {
   background: rgba(254, 254, 254, 0.2);
-  backdrop-filter: blur(6px);
+  /* backdrop-filter: blur(6px); */
   /* border: 1px solid rgba(98, 131, 145, 0.3); */
   color: rgb(98, 112, 165);
   font-weight: 500;

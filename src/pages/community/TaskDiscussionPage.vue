@@ -295,6 +295,7 @@ export default {
             this.task = {
               id: this.taskId,
               ...snapshot.val(),
+              discussion: true,
             }
           } else {
             console.log('Task not found')
