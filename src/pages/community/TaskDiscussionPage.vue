@@ -299,9 +299,7 @@ export default {
             }
             const user = (await get(dbRef(db, `users/${this.task.assigneeId}`))).val()
             this.task['assigneeName'] = user.name
-            console.log('Task Details' + JSON.stringify(this.task))
-          } else {
-            console.log('Task not found')
+            // console.log('Task Details' + JSON.stringify(this.task))
           }
         })
       } catch (err) {

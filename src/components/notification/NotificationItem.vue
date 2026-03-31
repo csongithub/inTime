@@ -67,7 +67,7 @@ export default {
           this.notification.type === 'COMMENT' ||
           this.notification.type === 'TASK_ASSIGNED'
         ) {
-          path = path + `/task/${this.notification.entityId}/discussion`
+          path = path + `/task/${this.notification.entityId}`
         } else if (this.notification.type === 'COMMUNITY_ADDED') {
           path = path + `/users`
         }

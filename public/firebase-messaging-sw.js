@@ -3,11 +3,11 @@ importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js'
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js')
 
 firebase.initializeApp({
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  messagingSenderId: 'YOUR_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+  apiKey: 'AIzaSyBp9myCoK_SV4Y3sirL0gRsNn4cCr8OdI4',
+  authDomain: 'task-12f91.firebaseapp.com',
+  projectId: 'task-12f91',
+  messagingSenderId: '105465786949',
+  appId: '1:105465786949:web:8cb198764688f285ffa92c',
 })
 
 const messaging = firebase.messaging()

@@ -23,7 +23,7 @@ export default {
         serviceWorkerRegistration: registration,
       })
 
-      console.log('FCM Token:', token)
+      // console.log('FCM Token:', token)
 
       if (token) {
         await set(ref(db, `fcmTokens/${userId}`), {
