@@ -418,8 +418,8 @@ export default {
         const el = document.getElementById(`comment-${commentId}`)
         const container = document.querySelector('.your-scroll-container')
 
-        console.log('Looking for:', `comment-${commentId}`)
-        console.log('Element:', document.getElementById(`comment-${commentId}`))
+        // console.log('Looking for:', `comment-${commentId}`)
+        // console.log('Element:', document.getElementById(`comment-${commentId}`))
         if (el && container) {
           container.scrollTop = el.offsetTop - 100
         }

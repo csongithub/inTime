@@ -10,17 +10,30 @@ firebase.initializeApp({
   appId: '1:105465786949:web:8cb198764688f285ffa92c',
 })
 
+// firebase.messaging()
+
 const messaging = firebase.messaging()
 
 // 🔔 Background Notification
 messaging.onBackgroundMessage((payload) => {
+  console.log('Payload ' + JSON.stringify(payload, null, 2))
   console.log('Background message received:', payload)
 
-  const notificationTitle = payload.notification?.title || 'New Notification'
+  const notificationTitle = payload.data.title
+
   const notificationOptions = {
-    body: payload.notification?.body || '',
-    data: payload.data || {},
+    body: payload.data.body,
+    icon: '/icons/favicon-16x16.png',
+    data: payload.data,
   }
 
   self.registration.showNotification(notificationTitle, notificationOptions)
 })
+
+// messaging.onBackgroundMessage((payload) => {
+//   console.log('🔥 SW HIT' + JSON.stringify(payload))
+
+//   self.registration.showNotification('FORCE TEST', {
+//     body: 'If you see this, SW works',
+//   })
+// })

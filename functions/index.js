@@ -49,13 +49,23 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
 
         if (!tokenData?.token) continue
 
+        // await admin.messaging().send({
+        //   token: tokenData.token,
+        //   notification: {
+        //     title: payload.title,
+        //     body: payload.body,
+        //   },
+        //   // data: {
+        //   //   type: payload.type || 'general',
+        //   //   refId: payload.refId || '',
+        //   // },
+        // })
+
         await admin.messaging().send({
           token: tokenData.token,
-          notification: {
+          data: {
             title: payload.title,
             body: payload.body,
-          },
-          data: {
             type: payload.type || 'general',
             refId: payload.refId || '',
           },
