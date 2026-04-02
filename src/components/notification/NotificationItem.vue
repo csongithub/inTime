@@ -58,10 +58,9 @@ export default {
         // mark as read
         await update(ref(db, `notifications/${uid}/${notificationId}`), { read: true })
 
-        // TODO: navigate to task (next step)
         // ✅ Step 1: Navigate to task page
 
-        const fullUrl = buildNotificationPath(this.notification)
+        const fullUrl = buildNotificationPath(this.notification, uid, this.notification.id)
         const path = fullUrl.split('?')[0]
 
         this.$router.push({

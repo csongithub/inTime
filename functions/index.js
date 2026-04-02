@@ -29,37 +29,31 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
         throw new Error('Invalid userIds')
       }
 
+      // 🔥 NEW: store notificationIds per user
+      const notificationMap = {}
+
       for (const uid of userIds) {
         const notifRef = db.ref(`notifications/${uid}`).push()
+        const notificationId = notifRef.key
 
-        updates[`notifications/${uid}/${notifRef.key}`] = {
+        notificationMap[uid] = notificationId
+
+        updates[`notifications/${uid}/${notificationId}`] = {
           ...payload,
           createdAt: Date.now(),
           read: false,
         }
       }
 
-      // Save notifications
+      // ✅ Save notifications
       await db.ref().update(updates)
 
-      // Send FCM
+      // ✅ Send FCM
       for (const uid of userIds) {
         const tokenSnap = await db.ref(`fcmTokens/${uid}`).once('value')
         const tokenData = tokenSnap.val()
 
         if (!tokenData?.token) continue
-
-        // await admin.messaging().send({
-        //   token: tokenData.token,
-        //   notification: {
-        //     title: payload.title,
-        //     body: payload.body,
-        //   },
-        //   // data: {
-        //   //   type: payload.type || 'general',
-        //   //   refId: payload.refId || '',
-        //   // },
-        // })
 
         await admin.messaging().send({
           token: tokenData.token,
@@ -67,13 +61,14 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
             title: payload.title,
             body: payload.body,
             type: payload.type || 'general',
-            entityId: payload.entityId || '',
-            communityId: payload.communityId || '',
-            commentId: payload.commentId || '',
+            entityId: String(payload.entityId) || '',
+            communityId: String(payload.communityId) || '',
+            commentId: String(payload.commentId) || '',
+            notificationId: String(notificationMap[uid] || ''),
+            uid: String(uid),
           },
         })
       }
-
       res.status(200).send({ success: true })
     } catch (error) {
       console.error(error)

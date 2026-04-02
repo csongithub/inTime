@@ -54,7 +54,7 @@ export const notifyCommunityAdd = async ({ userId, communityName, communityId })
 
 // src/utils/notificationHelper.js
 
-export function buildNotificationPath(data = {}) {
+export function buildNotificationPath(data = {}, uid = null, notificationId = null) {
   let path = `/community/${data.communityId || ''}`
 
   if (data.type === 'MENTION' || data.type === 'COMMENT' || data.type === 'TASK_ASSIGNED') {
@@ -63,8 +63,25 @@ export function buildNotificationPath(data = {}) {
     path += `/users`
   }
 
-  const query = data.commentId ? `?commentId=${data.commentId}` : ''
+  // 🔥 Build query params safely
+  const params = []
+
+  if (data.commentId && data.commentId !== undefined && data.commentId !== 'undefined') {
+    params.push(`commentId=${data.commentId}`)
+  }
+
+  if (notificationId && notificationId !== undefined && notificationId !== 'undefined') {
+    params.push(`notificationId=${notificationId}`)
+  }
+
+  if (uid && uid !== undefined && uid !== 'undefined') {
+    params.push(`uid=${uid}`)
+  }
+
+  const query = params.length ? `?${params.join('&')}` : ''
+
   const finalPath = path + query
-  console.log('Final Path:' + finalPath)
+  console.log('Final Path:', finalPath)
+
   return finalPath
 }

@@ -103,7 +103,7 @@
 <script>
 import TaskCard from 'src/components/task/TaskCard.vue'
 import { db } from 'src/boot/firebase'
-import { ref as dbRef, onValue, get, push, set, onChildAdded } from 'firebase/database'
+import { ref as dbRef, update, onValue, get, push, set, onChildAdded } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
 import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
 
@@ -152,9 +152,21 @@ export default {
     this.getCurrentUser()
     this.fetchMembers()
     this.scrollToComment()
+    // 🔥 Only call if opened via notification (in browser notification )
+    if (this.$route.query.uid && this.$route.query.notificationId) {
+      this.markNotificationAsRead(this.$route.query.uid, this.$route.query.notificationId)
+    }
   },
 
   methods: {
+    async markNotificationAsRead(uid, notificationId) {
+      try {
+        await update(dbRef(db, `notifications/${uid}/${notificationId}`), { read: true })
+        console.log('🔔 Marked as read')
+      } catch (err) {
+        console.error('❌ Failed to mark notification as read:', err)
+      }
+    },
     async fetchMembers() {
       // 1 Get member IDs
       const membersSnap = await get(dbRef(db, `communityMembers/${this.communityId}`))

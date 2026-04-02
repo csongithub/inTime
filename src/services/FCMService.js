@@ -49,7 +49,7 @@ export default {
 
             const data = notification.data || {}
 
-            const finalUrl = buildNotificationPath(data)
+            const finalUrl = buildNotificationPath(data, userId, data.notificationId)
 
             window.focus()
             window.location.href = finalUrl

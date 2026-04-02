@@ -100,7 +100,7 @@
 </template>
 
 <script>
-import { getDatabase, ref, get, set } from 'firebase/database'
+import { getDatabase, ref, get, set, update } from 'firebase/database'
 import { auth } from 'boot/firebase'
 import { getAvatarColor } from 'src/services/CommonUtils'
 import { notifyCommunityAdd } from 'src/helpers/NotificationHelpers'
@@ -124,9 +124,21 @@ export default {
   mounted() {
     this.fetchCommunity()
     this.fetchMembers()
+    // 🔥 Only call if opened via notification (in browser notification )
+    if (this.$route.query.uid && this.$route.query.notificationId) {
+      this.markNotificationAsRead(this.$route.query.uid, this.$route.query.notificationId)
+    }
   },
 
   methods: {
+    async markNotificationAsRead(uid, notificationId) {
+      try {
+        await update(ref(getDatabase(), `notifications/${uid}/${notificationId}`), { read: true })
+        console.log('🔔 Marked as read')
+      } catch (err) {
+        console.error('❌ Failed to mark notification as read:', err)
+      }
+    },
     async fetchCommunity() {
       const db = getDatabase()
       const communityId = this.$route.params.id

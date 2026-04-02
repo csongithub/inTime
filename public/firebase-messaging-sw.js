@@ -61,5 +61,27 @@ function buildNotificationPath(data = {}) {
     path += `/users`
   }
 
-  return path + (data.commentId ? `?commentId=${data.commentId}` : '')
+  // 🔥 Build query params dynamically
+  const queryParams = new URLSearchParams()
+
+  if (data.commentId && data.commentId !== 'undefined' && data.commentId !== undefined) {
+    queryParams.append('commentId', data.commentId)
+  }
+
+  if (
+    data.notificationId &&
+    data.notificationId !== 'undefined' &&
+    data.notificationId !== undefined
+  ) {
+    queryParams.append('notificationId', data.notificationId)
+  }
+
+  if (data.uid && data.uid !== 'undefined' && data.uid !== undefined) {
+    queryParams.append('uid', data.uid)
+  }
+
+  // ✅ Append query string if exists
+  const queryString = queryParams.toString()
+
+  return queryString ? `${path}?${queryString}` : path
 }
