@@ -1,6 +1,7 @@
 import { messaging, db } from 'src/boot/firebase'
 import { getToken, onMessage } from 'firebase/messaging'
 import { ref, set } from 'firebase/database'
+import { buildNotificationPath } from 'src/helpers/NotificationHelpers'
 
 const VAPID_KEY = import.meta.env.VITE_VAPID_KEY
 
@@ -35,11 +36,24 @@ export default {
       onMessage(messaging, (payload) => {
         console.log('Foreground message:', payload)
 
-        // ✅ Show browser notification manually
         if (Notification.permission === 'granted') {
-          new Notification(payload.notification?.title || 'Notification', {
-            body: payload.notification?.body || '',
+          const notification = new Notification(payload.data?.title || 'Notification', {
+            body: payload.data?.body || '',
+            icon: '/icons/logo.png',
+            data: payload.data, // 🔥 attach data
           })
+
+          // 🔥 HANDLE CLICK HERE
+          notification.onclick = function (event) {
+            event.preventDefault()
+
+            const data = notification.data || {}
+
+            const finalUrl = buildNotificationPath(data)
+
+            window.focus()
+            window.location.href = finalUrl
+          }
         }
       })
     } catch (error) {

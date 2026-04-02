@@ -51,3 +51,20 @@ export const notifyCommunityAdd = async ({ userId, communityName, communityId })
     body: `You were added to community ${communityName}`,
   })
 }
+
+// src/utils/notificationHelper.js
+
+export function buildNotificationPath(data = {}) {
+  let path = `/community/${data.communityId || ''}`
+
+  if (data.type === 'MENTION' || data.type === 'COMMENT' || data.type === 'TASK_ASSIGNED') {
+    path += `/task/${data.entityId || ''}`
+  } else if (data.type === 'COMMUNITY_ADDED') {
+    path += `/users`
+  }
+
+  const query = data.commentId ? `?commentId=${data.commentId}` : ''
+  const finalPath = path + query
+  console.log('Final Path:' + finalPath)
+  return finalPath
+}

@@ -22,6 +22,7 @@
 import { db } from 'boot/firebase'
 import { ref, update } from 'firebase/database'
 import { auth } from 'src/firebase'
+import { buildNotificationPath } from 'src/helpers/NotificationHelpers'
 
 export default {
   name: 'NotificationItem',
@@ -60,17 +61,8 @@ export default {
         // TODO: navigate to task (next step)
         // ✅ Step 1: Navigate to task page
 
-        let path = `/community/${this.notification.communityId}`
-
-        if (
-          this.notification.type === 'MENTION' ||
-          this.notification.type === 'COMMENT' ||
-          this.notification.type === 'TASK_ASSIGNED'
-        ) {
-          path = path + `/task/${this.notification.entityId}`
-        } else if (this.notification.type === 'COMMUNITY_ADDED') {
-          path = path + `/users`
-        }
+        const fullUrl = buildNotificationPath(this.notification)
+        const path = fullUrl.split('?')[0]
 
         this.$router.push({
           path: path,

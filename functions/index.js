@@ -67,7 +67,9 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
             title: payload.title,
             body: payload.body,
             type: payload.type || 'general',
-            refId: payload.refId || '',
+            entityId: payload.entityId || '',
+            communityId: payload.communityId || '',
+            commentId: payload.commentId || '',
           },
         })
       }
