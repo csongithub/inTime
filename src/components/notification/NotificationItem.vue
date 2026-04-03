@@ -19,8 +19,8 @@
 </template>
 
 <script>
-import { db } from 'boot/firebase'
-import { ref, update } from 'firebase/database'
+// import { db } from 'boot/firebase'
+// import { ref, update } from 'firebase/database'
 import { auth } from 'src/firebase'
 import { buildNotificationPath } from 'src/helpers/NotificationHelpers'
 
@@ -52,11 +52,11 @@ export default {
     // 📌 Handle click
     async handleClick() {
       const uid = auth.currentUser.uid
-      const notificationId = this.notification.id
+      // const notificationId = this.notification.id
 
       try {
         // mark as read
-        await update(ref(db, `notifications/${uid}/${notificationId}`), { read: true })
+        // await update(ref(db, `notifications/${uid}/${notificationId}`), { read: true })
 
         // ✅ Step 1: Navigate to task page
 
@@ -67,6 +67,8 @@ export default {
           path: path,
           query: {
             commentId: this.notification.commentId,
+            uid: uid,
+            notificationId: this.notification.id,
           },
         })
       } catch (err) {
