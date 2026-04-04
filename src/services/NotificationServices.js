@@ -27,18 +27,24 @@ export default {
   async sendNotification(userIds, payload) {
     try {
       const notificationAPI = `${import.meta.env.VITE_API_BASE_URL}/sendNotification`
-      await fetch(notificationAPI, {
+      console.log('API URL:', notificationAPI)
+      const res = await fetch(notificationAPI, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          userIds,
-          payload,
-        }),
+        body: JSON.stringify({ userIds, payload }),
       })
+
+      const data = await res.json()
+
+      console.log('Notification API Response:', data)
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Notification API failed')
+      }
     } catch (error) {
-      console.error('Notification Error:', error)
+      console.error('❌ Notification Error:', error)
     }
   },
 }

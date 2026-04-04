@@ -53,21 +53,33 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
         const tokenSnap = await db.ref(`fcmTokens/${uid}`).once('value')
         const tokenData = tokenSnap.val()
 
-        if (!tokenData?.token) continue
+        const tokens = []
 
-        await admin.messaging().send({
-          token: tokenData.token,
-          data: {
-            title: payload.title,
-            body: payload.body,
-            type: payload.type || 'general',
-            entityId: String(payload.entityId) || '',
-            communityId: String(payload.communityId) || '',
-            commentId: String(payload.commentId) || '',
-            notificationId: String(notificationMap[uid] || ''),
-            uid: String(uid),
-          },
-        })
+        if (tokenData?.web?.token) tokens.push(tokenData.web.token)
+        if (tokenData?.mobile?.token) tokens.push(tokenData.mobile.token)
+
+        console.log('Sending to tokens:', JSON.stringify(tokens))
+        for (const token of tokens) {
+          await admin.messaging().send({
+            token,
+
+            notification: {
+              title: payload.title,
+              body: payload.body,
+            },
+
+            data: {
+              title: payload.title,
+              body: payload.body,
+              type: payload.type || 'general',
+              entityId: String(payload.entityId || ''),
+              communityId: String(payload.communityId || ''),
+              commentId: String(payload.commentId || ''),
+              notificationId: String(notificationMap[uid] || ''),
+              uid: String(uid),
+            },
+          })
+        }
       }
       res.status(200).send({ success: true })
     } catch (error) {
