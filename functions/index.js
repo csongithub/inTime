@@ -53,21 +53,11 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
         const tokenSnap = await db.ref(`fcmTokens/${uid}`).once('value')
         const tokenData = tokenSnap.val()
 
-        const tokens = []
-
-        if (tokenData?.web?.token) tokens.push(tokenData.web.token)
-        if (tokenData?.mobile?.token) tokens.push(tokenData.mobile.token)
-
-        console.log('Sending to tokens:', JSON.stringify(tokens))
-        for (const token of tokens) {
+        if (tokenData?.web?.token) {
+          console.log('Web Token: ' + tokenData.web.token)
           await admin.messaging().send({
-            token,
-
-            notification: {
-              title: payload.title,
-              body: payload.body,
-            },
-
+            token: tokenData.web.token,
+            //data payload for web platform
             data: {
               title: payload.title,
               body: payload.body,
@@ -77,6 +67,25 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
               commentId: String(payload.commentId || ''),
               notificationId: String(notificationMap[uid] || ''),
               uid: String(uid),
+            },
+          })
+        }
+
+        if (tokenData?.mobile?.token) {
+          console.log('Mobile Token: ' + tokenData.mobile.token)
+          await admin.messaging().send({
+            token: tokenData.mobile.token,
+            //notification payload for mobile/native platform
+            notification: {
+              title: payload.title,
+              body: payload.body,
+            },
+            // 🔥 CRITICAL (THIS FIXES SOUND)
+            android: {
+              notification: {
+                channelId: 'default_v2', // MUST match app
+                sound: 'notification_sound',
+              },
             },
           })
         }

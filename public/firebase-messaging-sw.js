@@ -29,6 +29,12 @@ messaging.onBackgroundMessage((payload) => {
     .showNotification(notificationTitle, notificationOptions)
     .then(() => console.log('✅ Notification shown'))
     .catch((err) => console.error('❌ Notification error:', err))
+
+  // 🔊 TRY PLAY SOUND (may not always work)
+  // self.registration.getNotifications().then(() => {
+  //   const audio = new Audio('/sounds/notification_sound.mp3') //notification_sound.mp3 must be present at /inTIME\public\sound
+  //   audio.play().catch(() => {})
+  // })
 })
 
 // 🔁 Click handling
