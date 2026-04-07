@@ -76,9 +76,14 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
           await admin.messaging().send({
             token: tokenData.mobile.token,
             //notification payload for mobile/native platform
-            notification: {
+            // notification: {
+            //   title: payload.title,
+            //   body: payload.body,
+            // },
+            data: {
               title: payload.title,
               body: payload.body,
+              icon: 'ic_stat_notification',
             },
             // 🔥 CRITICAL (THIS FIXES SOUND)
             android: {

@@ -68,6 +68,7 @@ export default {
           {
             title: notification.title || data.title,
             body: notification.body || data.body,
+            smallIcon: 'ic_stat_notification',
             id: Date.now(),
             extra: data,
             sound: 'notification_sound',
