@@ -75,15 +75,21 @@ exports.sendNotification = onRequest({ region: 'asia-south1' }, (req, res) => {
           console.log('Mobile Token: ' + tokenData.mobile.token)
           await admin.messaging().send({
             token: tokenData.mobile.token,
-            //notification payload for mobile/native platform
-            // notification: {
-            //   title: payload.title,
-            //   body: payload.body,
-            // },
+            // notification payload for mobile/native platform
             data: {
               title: payload.title,
               body: payload.body,
-              icon: 'ic_stat_notification',
+              type: payload.type || 'general',
+              entityId: String(payload.entityId || ''),
+              communityId: String(payload.communityId || ''),
+              commentId: String(payload.commentId || ''),
+              notificationId: String(notificationMap[uid] || ''),
+              uid: String(uid),
+              // icon: 'ic_stat_notification',
+            },
+            notification: {
+              title: payload.title,
+              body: payload.body,
             },
             // 🔥 CRITICAL (THIS FIXES SOUND)
             android: {

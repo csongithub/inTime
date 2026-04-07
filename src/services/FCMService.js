@@ -47,27 +47,17 @@ export default {
       })
     })
     // ❗ Notification received (foreground)
-    PushNotifications.addListener('pushNotificationReceived', (notification) => {
-      console.log('Mobile Foreground:', notification)
-      const data = notification.data || {}
+    PushNotifications.addListener('pushNotificationReceived', async (payload) => {
+      // console.log('Mobile Foreground:', notification)
+      const data = payload.data || {}
 
+      await LocalNotifications.requestPermissions()
       // 🔥 Manually show notification
-      // PushNotifications.schedule({
-      //   notifications: [
-      //     {
-      //       title: notification.title || data.title,
-      //       body: notification.body || data.body,
-      //       id: Date.now(),
-      //       extra: data,
-      //       sound: 'notification_sound', // 🔥 ADD THIS FOR SOUND
-      //     },
-      //   ],
-      // })
       LocalNotifications.schedule({
         notifications: [
           {
-            title: notification.title || data.title,
-            body: notification.body || data.body,
+            title: data.title || 'Notification',
+            body: data.body || '',
             smallIcon: 'ic_stat_notification',
             id: Date.now(),
             extra: data,
