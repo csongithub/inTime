@@ -13,6 +13,30 @@
       <TaskCard v-if="task" :task="task" />
     </div>
 
+    <!-- IMAGE LIBRARY -->
+    <div class="image-grid q-mt-xs row wrap items-center q-gutter-sm">
+      <!-- ADD BUTTON -->
+      <!-- <div class="q-mr-sm">
+        <q-btn round icon="add" color="primary" @click="triggerFileInput" />
+        <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
+      </div> -->
+      <div class="upload-tile" @click="triggerFileInput">
+        <q-icon name="image" size="28px" color="grey-6" />
+
+        <q-icon name="add_circle" size="16px" color="primary" class="upload-plus" />
+      </div>
+
+      <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
+      <!-- IMAGES -->
+      <div v-for="(img, index) in images" :key="img.id" class="q-mr-sm">
+        <q-img
+          :src="img.url"
+          style="width: 80px; height: 80px; border-radius: 8px"
+          @click="openGallery(index)"
+        />
+      </div>
+    </div>
+
     <q-separator />
 
     <!-- COMMENTS LIST -->
@@ -49,10 +73,25 @@
     <q-separator />
 
     <!-- ADD COMMENT -->
-    <!-- ADD COMMENT -->
     <div class="row q-pa-sm items-center q-gutter-sm">
       <div class="col relative-position">
         <div>
+          <!-- ✅ IMAGE PREVIEW (ADD HERE) -->
+          <div v-if="selectedCommentImage" class="q-mb-sm">
+            <q-img
+              :src="URL.createObjectURL(selectedCommentImage)"
+              style="width: 80px; height: 80px; border-radius: 8px"
+            />
+            <q-btn
+              icon="close"
+              size="sm"
+              round
+              dense
+              color="negative"
+              class="absolute-top-right"
+              @click="selectedCommentImage = null"
+            />
+          </div>
           <q-input
             class="mention-input"
             ref="commentInput"
@@ -92,10 +131,48 @@
           </q-list>
         </div>
       </div>
+      <!-- ✅ IMAGE BUTTON (ADD HERE) -->
+      <q-btn color="primary" flat round icon="image" @click="$refs.commentImage.click()" />
 
-      <q-btn :disable="!newComment.trim()" icon="send" round color="primary" @click="addComment" />
+      <!-- ✅ HIDDEN FILE INPUT -->
+      <input
+        type="file"
+        ref="commentImage"
+        hidden
+        accept="image/*"
+        @change="onCommentImageSelected"
+      />
+      <q-btn
+        flat
+        :disable="!newComment.trim()"
+        icon="send"
+        round
+        color="primary"
+        @click="addComment"
+      />
     </div>
+    <q-dialog v-model="galleryOpen" maximized persistent>
+      <div class="gallery-container bg-primary">
+        <!-- 🔥 TOP BAR -->
+        <div class="gallery-header row items-center justify-between">
+          <q-btn flat round icon="close" color="white" @click="galleryOpen = false" />
 
+          <div class="text-white text-caption">{{ currentIndex + 1 }} / {{ images.length }}</div>
+
+          <!-- optional placeholder -->
+          <div style="width: 40px"></div>
+        </div>
+
+        <!-- 🔥 IMAGE CAROUSEL -->
+        <q-carousel v-model="currentIndex" swipeable animated infinite class="gallery-carousel">
+          <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
+            <div class="full-height flex flex-center">
+              <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
+            </div>
+          </q-carousel-slide>
+        </q-carousel>
+      </div>
+    </q-dialog>
     <!-- {{ JSON.stringify(communityMembers) }} -->
   </q-page>
 </template>
@@ -106,6 +183,13 @@ import { db } from 'src/boot/firebase'
 import { ref as dbRef, update, onValue, get, push, set, onChildAdded } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
 import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
+import {
+  getStorage,
+  ref as storageRef,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+} from 'firebase/storage'
 
 export default {
   name: 'TaskDiscussionPage',
@@ -141,12 +225,21 @@ export default {
       dropdownY: 0,
 
       selectedMentionIndex: 0,
+      //Files/Image related data below
+      images: [],
+      uploading: false,
+      uploadProgress: 0,
+      selectedCommentImage: null,
+      //FULLSCREEN GALLERY WITH SWIPE 🔥
+      galleryOpen: false,
+      currentIndex: 0,
     }
   },
 
   mounted() {
     this.taskId = this.$route.params.taskId
     this.communityId = this.$route.params.communityId
+    this.loadImages() //Load task images
     this.loadTask()
     this.loadComments()
     this.getCurrentUser()
@@ -159,6 +252,92 @@ export default {
   },
 
   methods: {
+    onCommentImageSelected(e) {
+      const file = e.target.files[0]
+      if (file) {
+        this.selectedCommentImage = file
+      }
+    },
+    openGallery(index) {
+      this.currentIndex = index
+      this.galleryOpen = true
+    },
+    async deleteImage(image) {
+      try {
+        const storage = getStorage()
+
+        // delete from storage
+        const fileRef = storageRef(storage, image.path)
+        await deleteObject(fileRef)
+
+        // delete from DB
+        await set(dbRef(db, `taskImages/${this.communityId}/${this.taskId}/${image.id}`), null)
+      } catch (err) {
+        console.error('❌ Delete failed:', err)
+      }
+    },
+    triggerFileInput() {
+      this.$refs.fileInput.click()
+    },
+
+    handleFileChange(e) {
+      const file = e.target.files[0]
+      if (file) {
+        this.uploadImage(file, 'DIRECT')
+      }
+    },
+    loadImages() {
+      const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
+
+      onChildAdded(imagesRef, (snapshot) => {
+        const img = {
+          id: snapshot.key,
+          ...snapshot.val(),
+        }
+
+        this.images.push(img)
+      })
+    },
+    async uploadImage(file, source = 'DIRECT', commentId = null) {
+      if (!file) return
+
+      this.uploading = true
+
+      try {
+        const storage = getStorage()
+
+        // 🔥 Create DB ref first
+        const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
+        const newImageRef = push(imagesRef)
+
+        const imageId = newImageRef.key
+
+        // 🔥 Storage path
+        const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
+
+        const fileRef = storageRef(storage, filePath)
+
+        // 🔥 Upload
+        await uploadBytes(fileRef, file)
+
+        const url = await getDownloadURL(fileRef)
+
+        // 🔥 Save metadata
+        await set(newImageRef, {
+          url,
+          path: filePath,
+          uploadedBy: this.currentUser.id,
+          uploadedByName: this.currentUser.name,
+          createdAt: Date.now(),
+          source,
+          commentId: commentId || null,
+        })
+      } catch (err) {
+        console.error('❌ Upload failed:', err)
+      }
+
+      this.uploading = false
+    },
     async markNotificationAsRead(uid, notificationId) {
       try {
         await update(dbRef(db, `notifications/${uid}/${notificationId}`), { read: true })
@@ -345,7 +524,7 @@ export default {
     },
     async addComment() {
       if (!this.newComment.trim()) return
-
+      const file = this.selectedCommentImage // set selected image
       const communityId = this.$route.params.communityId
       const taskId = this.$route.params.taskId
 
@@ -372,6 +551,11 @@ export default {
         await set(newCommentRef, comment)
         this.newComment = ''
 
+        // 🔥 Upload image if exists
+        if (file) {
+          await this.uploadImage(file, 'COMMENT', newCommentRef.key)
+          this.selectedCommentImage = null
+        }
         //Send Notification
         const mentionedUserIds = this.extractMentions(textForStorage)
         this.notifyMentionedMembers(mentionedUserIds, newCommentRef.key)
@@ -486,5 +670,64 @@ export default {
 }
 .mention-active {
   background: rgba(66, 176, 44, 0.1);
+}
+.image-grid {
+  max-height: 180px; /* 🔥 3 rows approx */
+  overflow-y: auto;
+}
+
+/* optional: hide scrollbar */
+.image-grid::-webkit-scrollbar {
+  display: none;
+}
+.image-grid {
+  scrollbar-width: none;
+}
+.gallery-container {
+  background: o;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.gallery-header {
+  height: 50px;
+  padding: 0 10px;
+  z-index: 10;
+}
+
+.gallery-carousel {
+  flex: 1;
+}
+
+.upload-tile {
+  width: 80px;
+  height: 80px;
+  border: 3px dashed #5482de;
+  border-radius: 8px;
+  background: #f5f5f5;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  position: relative;
+  cursor: pointer;
+}
+
+.upload-tile:hover {
+  background: #e0e0e0;
+}
+
+.upload-plus {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+}
+
+.image-thumb {
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
 }
 </style>

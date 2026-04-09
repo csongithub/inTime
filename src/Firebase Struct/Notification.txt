@@ -11,3 +11,19 @@ notifications
          read: false
          meta:
             commentId: c45
+
+taskImages: {
+  communityId: {
+    taskId: {
+      imageId: {
+        url: "...",
+        path: "...",
+        uploadedBy: "...",
+        uploadedByName: "...",
+        createdAt: 1710000000000,
+        source: "DIRECT" | "COMMENT",
+        commentId: "optional"
+      }
+    }
+  }
+}
