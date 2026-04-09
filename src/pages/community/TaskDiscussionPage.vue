@@ -178,16 +178,6 @@
         @touchend="onTouchEnd"
       >
         <!-- 🔥 HEADER (LIKE YOUR APP HEADER) -->
-        <q-header elevated class="bg-primary text-white q-pt-xl">
-          <q-toolbar>
-            <!-- CLOSE BUTTON -->
-            <q-btn flat dense round icon="arrow_back" @click="galleryOpen = false" />
-
-            <!-- TITLE -->
-            <q-toolbar-title> {{ currentIndex + 1 }} / {{ images.length }} </q-toolbar-title>
-            <q-btn flat round icon="share" @click="shareImage" />
-          </q-toolbar>
-        </q-header>
 
         <!-- 🔥 IMAGE AREA -->
         <div class="col">
@@ -225,6 +215,22 @@
             </q-carousel-slide>
           </q-carousel>
         </div>
+        <q-footer class="text-white">
+          <q-toolbar class="relative-position">
+            <!-- 🔹 LEFT: BACK -->
+            <q-btn flat label="close" dense @click="galleryOpen = false" />
+
+            <!-- 🔹 CENTER: COUNT -->
+            <div class="absolute-center text-white text-subtitle2">
+              {{ currentIndex + 1 }} / {{ images.length }}
+            </div>
+
+            <!-- 🔹 RIGHT: SHARE -->
+            <div class="absolute-right q-pr-sm">
+              <q-btn flat round icon="share" @click="shareImage" />
+            </div>
+          </q-toolbar>
+        </q-footer>
       </div>
     </q-dialog>
 
