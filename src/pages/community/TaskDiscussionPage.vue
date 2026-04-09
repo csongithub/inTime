@@ -20,11 +20,30 @@
         <q-btn round icon="add" color="primary" @click="triggerFileInput" />
         <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
       </div> -->
-      <div class="upload-tile" @click="triggerFileInput">
-        <q-icon name="image" size="28px" color="grey-6" />
+      <div class="upload-tile" @click="!uploading && triggerFileInput()">
+        <!-- 🔥 SHOW LOADER -->
+        <div v-if="uploading" class="column items-center justify-center">
+          <q-circular-progress
+            indeterminate="false"
+            :value="uploadProgress"
+            size="40px"
+            thickness="0.2"
+            color="primary"
+            track-color="grey-3"
+          />
 
-        <q-icon name="add_circle" size="16px" color="primary" class="upload-plus" />
+          <div class="text-caption q-mt-xs">{{ uploadProgress }}%</div>
+        </div>
+
+        <!-- 🔥 NORMAL STATE -->
+        <div v-else>
+          <q-icon name="image" size="28px" color="grey-6" />
+
+          <q-icon name="add_circle" size="16px" color="primary" class="upload-plus" />
+        </div>
       </div>
+
+      <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
 
       <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
       <!-- IMAGES -->
@@ -152,27 +171,63 @@
       />
     </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
-      <div class="gallery-container bg-primary">
-        <!-- 🔥 TOP BAR -->
-        <div class="gallery-header row items-center justify-between">
-          <q-btn flat round icon="close" color="white" @click="galleryOpen = false" />
+      <div
+        class="column full-height bg-black"
+        @touchstart="onTouchStart"
+        @touchmove="onTouchMove"
+        @touchend="onTouchEnd"
+      >
+        <!-- 🔥 HEADER (LIKE YOUR APP HEADER) -->
+        <q-header elevated class="bg-primary text-white q-pt-xl">
+          <q-toolbar>
+            <!-- CLOSE BUTTON -->
+            <q-btn flat dense round icon="arrow_back" @click="galleryOpen = false" />
 
-          <div class="text-white text-caption">{{ currentIndex + 1 }} / {{ images.length }}</div>
+            <!-- TITLE -->
+            <q-toolbar-title> {{ currentIndex + 1 }} / {{ images.length }} </q-toolbar-title>
+            <q-btn flat round icon="share" @click="shareImage" />
+          </q-toolbar>
+        </q-header>
 
-          <!-- optional placeholder -->
-          <div style="width: 40px"></div>
+        <!-- 🔥 IMAGE AREA -->
+        <div class="col">
+          <q-carousel v-model="currentIndex" swipeable animated infinite class="full-height">
+            <!-- <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
+              <div class="full-height flex flex-center">
+                <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
+              </div>
+            </q-carousel-slide> -->
+            <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
+              <div class="full-height flex flex-center relative-position">
+                <!-- IMAGE -->
+                <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
+
+                <!-- 🔥 LEFT BUTTON -->
+                <q-btn
+                  v-if="images.length > 1"
+                  round
+                  dense
+                  icon="chevron_left"
+                  class="nav-btn left-btn"
+                  @click.stop="prevImage"
+                />
+
+                <!-- 🔥 RIGHT BUTTON -->
+                <q-btn
+                  v-if="images.length > 1"
+                  round
+                  dense
+                  icon="chevron_right"
+                  class="nav-btn right-btn"
+                  @click.stop="nextImage"
+                />
+              </div>
+            </q-carousel-slide>
+          </q-carousel>
         </div>
-
-        <!-- 🔥 IMAGE CAROUSEL -->
-        <q-carousel v-model="currentIndex" swipeable animated infinite class="gallery-carousel">
-          <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
-            <div class="full-height flex flex-center">
-              <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
-            </div>
-          </q-carousel-slide>
-        </q-carousel>
       </div>
     </q-dialog>
+
     <!-- {{ JSON.stringify(communityMembers) }} -->
   </q-page>
 </template>
@@ -186,9 +241,9 @@ import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
 import {
   getStorage,
   ref as storageRef,
-  uploadBytes,
   getDownloadURL,
   deleteObject,
+  uploadBytesResumable,
 } from 'firebase/storage'
 
 export default {
@@ -233,6 +288,9 @@ export default {
       //FULLSCREEN GALLERY WITH SWIPE 🔥
       galleryOpen: false,
       currentIndex: 0,
+
+      touchStartY: 0,
+      touchEndY: 0,
     }
   },
 
@@ -252,6 +310,92 @@ export default {
   },
 
   methods: {
+    prevImage() {
+      if (this.currentIndex > 0) {
+        this.currentIndex--
+      } else {
+        this.currentIndex = this.images.length - 1 // loop
+      }
+    },
+
+    nextImage() {
+      if (this.currentIndex < this.images.length - 1) {
+        this.currentIndex++
+      } else {
+        this.currentIndex = 0 // loop
+      }
+    },
+    // async shareImage() {
+    //   try {
+    //     const img = this.images[this.currentIndex]
+    //     if (!img) return
+
+    //     const response = await fetch(img.url)
+    //     const blob = await response.blob()
+
+    //     const file = new File([blob], 'image.jpg', { type: blob.type })
+
+    //     if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    //       await navigator.share({
+    //         files: [file],
+    //         title: 'Task Image',
+    //       })
+    //     } else {
+    //       // fallback
+    //       await navigator.clipboard.writeText(img.url)
+    //       this.$q.notify({
+    //         message: 'Image link copied',
+    //         color: 'positive',
+    //       })
+    //     }
+    //   } catch (err) {
+    //     console.error('❌ Share failed:', err)
+    //   }
+    // },
+    async shareImage() {
+      try {
+        const img = this.images[this.currentIndex]
+        if (!img) return
+
+        // 🔥 Try native share with URL (works everywhere)
+        if (navigator.share) {
+          await navigator.share({
+            title: 'Task Image',
+            text: 'Check this image',
+            url: img.url,
+          })
+          return
+        }
+
+        // fallback
+        await navigator.clipboard.writeText(img.url)
+        this.$q.notify({
+          message: 'Image link copied',
+          color: 'positive',
+        })
+      } catch (err) {
+        console.error('❌ Share failed:', err)
+      }
+    },
+    onTouchStart(e) {
+      this.touchStartY = e.touches[0].clientY
+    },
+
+    onTouchMove(e) {
+      this.touchEndY = e.touches[0].clientY
+    },
+
+    onTouchEnd() {
+      const diffY = this.touchEndY - this.touchStartY
+
+      // 🔥 Only close if strong vertical swipe
+      if (diffY > 120) {
+        this.galleryOpen = false
+      }
+
+      this.touchStartY = 0
+      this.touchEndY = 0
+    },
     onCommentImageSelected(e) {
       const file = e.target.files[0]
       if (file) {
@@ -302,41 +446,53 @@ export default {
       if (!file) return
 
       this.uploading = true
+      this.uploadProgress = 0
 
       try {
         const storage = getStorage()
 
-        // 🔥 Create DB ref first
         const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
         const newImageRef = push(imagesRef)
-
         const imageId = newImageRef.key
 
-        // 🔥 Storage path
         const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
-
         const fileRef = storageRef(storage, filePath)
 
-        // 🔥 Upload
-        await uploadBytes(fileRef, file)
+        // 🔥 USE resumable upload
+        const uploadTask = uploadBytesResumable(fileRef, file)
 
-        const url = await getDownloadURL(fileRef)
+        uploadTask.on(
+          'state_changed',
+          (snapshot) => {
+            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
 
-        // 🔥 Save metadata
-        await set(newImageRef, {
-          url,
-          path: filePath,
-          uploadedBy: this.currentUser.id,
-          uploadedByName: this.currentUser.name,
-          createdAt: Date.now(),
-          source,
-          commentId: commentId || null,
-        })
+            this.uploadProgress = Math.round(progress)
+          },
+          (error) => {
+            console.error('❌ Upload error:', error)
+            this.uploading = false
+          },
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref)
+
+            await set(newImageRef, {
+              url,
+              path: filePath,
+              uploadedBy: this.currentUser.id,
+              uploadedByName: this.currentUser.name,
+              createdAt: Date.now(),
+              source,
+              commentId: commentId || null,
+            })
+
+            this.uploading = false
+            this.uploadProgress = 0
+          },
+        )
       } catch (err) {
         console.error('❌ Upload failed:', err)
+        this.uploading = false
       }
-
-      this.uploading = false
     },
     async markNotificationAsRead(uid, notificationId) {
       try {
@@ -715,6 +871,10 @@ export default {
   cursor: pointer;
 }
 
+.upload-tile.loading {
+  opacity: 0.7;
+}
+
 .upload-tile:hover {
   background: #e0e0e0;
 }
@@ -729,5 +889,21 @@ export default {
   width: 100px;
   height: 100px;
   border-radius: 8px;
+}
+
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.4);
+  color: white;
+}
+
+.left-btn {
+  left: 10px;
+}
+
+.right-btn {
+  right: 10px;
 }
 </style>
