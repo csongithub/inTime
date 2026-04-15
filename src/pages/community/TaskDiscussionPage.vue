@@ -14,12 +14,7 @@
     </div>
 
     <!-- IMAGE LIBRARY -->
-    <div class="image-grid q-mt-xs row wrap items-center q-gutter-sm">
-      <!-- ADD BUTTON -->
-      <!-- <div class="q-mr-sm">
-        <q-btn round icon="add" color="primary" @click="triggerFileInput" />
-        <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
-      </div> -->
+    <div class="image-grid q-mt-xs">
       <div class="upload-tile" @click="!uploading && triggerFileInput()">
         <!-- 🔥 SHOW LOADER -->
         <div v-if="uploading" class="column items-center justify-center">
@@ -45,7 +40,7 @@
 
       <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
 
-      <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
+      <!-- <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" /> -->
       <!-- IMAGES -->
       <div v-for="(img, index) in images" :key="img.id" class="q-mr-sm">
         <q-img
@@ -96,9 +91,9 @@
       <div class="col relative-position">
         <div>
           <!-- ✅ IMAGE PREVIEW (ADD HERE) -->
-          <div v-if="selectedCommentImage" class="q-mb-sm">
+          <div v-if="selectedCommentImage.url" class="q-mb-sm">
             <q-img
-              :src="URL.createObjectURL(selectedCommentImage)"
+              :src="selectedCommentImage.url"
               style="width: 80px; height: 80px; border-radius: 8px"
             />
             <q-btn
@@ -151,7 +146,7 @@
         </div>
       </div>
       <!-- ✅ IMAGE BUTTON (ADD HERE) -->
-      <q-btn color="primary" flat round icon="image" @click="$refs.commentImage.click()" />
+      <q-btn color="primary" flat round icon="image" @click="triggerCommentImage()" />
 
       <!-- ✅ HIDDEN FILE INPUT -->
       <input
@@ -169,6 +164,7 @@
         color="primary"
         @click="addComment"
       />
+      <q-btn label="Test Ref" @click="testRef" />
     </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
       <div
@@ -204,6 +200,7 @@
 
                 <!-- 🔥 RIGHT BUTTON -->
                 <q-btn
+                  flat
                   v-if="images.length > 1"
                   round
                   dense
@@ -290,7 +287,7 @@ export default {
       images: [],
       uploading: false,
       uploadProgress: 0,
-      selectedCommentImage: null,
+      selectedCommentImage: { file: null, url: null },
       //FULLSCREEN GALLERY WITH SWIPE 🔥
       galleryOpen: false,
       currentIndex: 0,
@@ -316,6 +313,9 @@ export default {
   },
 
   methods: {
+    testRef() {
+      console.log('REF:', this.$refs.commentImage)
+    },
     prevImage() {
       if (this.currentIndex > 0) {
         this.currentIndex--
@@ -402,12 +402,7 @@ export default {
       this.touchStartY = 0
       this.touchEndY = 0
     },
-    onCommentImageSelected(e) {
-      const file = e.target.files[0]
-      if (file) {
-        this.selectedCommentImage = file
-      }
-    },
+
     openGallery(index) {
       this.currentIndex = index
       this.galleryOpen = true
@@ -426,12 +421,29 @@ export default {
         console.error('❌ Delete failed:', err)
       }
     },
+    triggerCommentImage() {
+      // console.log(JSON.stringify(this.$refs.commentImage))
+      this.$refs.commentImage.click()
+    },
+    onCommentImageSelected(e) {
+      // console.log('COMMENT FILE: ' + JSON.stringify(e))
+      const file = e.target.files[0]
+      if (file) {
+        this.selectedCommentImage.file = file
+        this.selectedCommentImage.url = URL.createObjectURL(file)
+        // console.log('SELECTED COMMENT FILE: ' + JSON.stringify(this.selectedCommentImage.name))
+        // console.log('SELECTED COMMENT FILE URL: ' + JSON.stringify(this.selectedCommentImage.url))
+      }
+    },
     triggerFileInput() {
+      // console.log(JSON.stringify(this.$refs.fileInput))
       this.$refs.fileInput.click()
     },
 
     handleFileChange(e) {
+      // console.log('FILE: ' + JSON.stringify(e))
       const file = e.target.files[0]
+      // console.log('SELECTED  FILE: ' + JSON.stringify(file.name))
       if (file) {
         this.uploadImage(file, 'DIRECT')
       }
@@ -686,7 +698,7 @@ export default {
     },
     async addComment() {
       if (!this.newComment.trim()) return
-      const file = this.selectedCommentImage // set selected image
+      const file = this.selectedCommentImage.file // set selected image
       const communityId = this.$route.params.communityId
       const taskId = this.$route.params.taskId
 
@@ -716,7 +728,8 @@ export default {
         // 🔥 Upload image if exists
         if (file) {
           await this.uploadImage(file, 'COMMENT', newCommentRef.key)
-          this.selectedCommentImage = null
+          this.selectedCommentImage.url = null
+          this.selectedCommentImage.file = null
         }
         //Send Notification
         const mentionedUserIds = this.extractMentions(textForStorage)
@@ -843,7 +856,12 @@ export default {
   display: none;
 }
 .image-grid {
-  scrollbar-width: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); /* ✅ exactly 4 items per row */
+  gap: 8px;
+
+  max-height: 180px; /* for 2 rows */
+  overflow-y: auto;
 }
 .gallery-container {
   background: o;
