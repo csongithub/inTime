@@ -77,6 +77,13 @@
             </q-item-label>
 
             <q-item-label caption class="q-mt-xs comment-text text-black">
+              <q-img
+                v-if="comment.url"
+                :src="comment.url"
+                style="width: 80px; height: 80px; border-radius: 8px"
+                @click="openGallery(index)"
+              />
+
               <span v-html="formatComment(comment.text)"></span>
             </q-item-label>
           </q-item-section>
@@ -164,7 +171,7 @@
         color="primary"
         @click="addComment"
       />
-      <q-btn label="Test Ref" @click="testRef" />
+      <!-- <q-btn label="Test Ref" @click="testRef" /> -->
     </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
       <div
@@ -460,8 +467,61 @@ export default {
         this.images.push(img)
       })
     },
+    // async uploadImage(file, source = 'DIRECT', commentId = null) {
+    //   if (!file) return
+    //   let fileURL = null
+    //   this.uploading = true
+    //   this.uploadProgress = 0
+
+    //   try {
+    //     const storage = getStorage()
+
+    //     const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
+    //     const newImageRef = push(imagesRef)
+    //     const imageId = newImageRef.key
+
+    //     const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
+    //     const fileRef = storageRef(storage, filePath)
+
+    //     // 🔥 USE resumable upload
+    //     const uploadTask = uploadBytesResumable(fileRef, file)
+
+    //     uploadTask.on(
+    //       'state_changed',
+    //       (snapshot) => {
+    //         const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+
+    //         this.uploadProgress = Math.round(progress)
+    //       },
+    //       (error) => {
+    //         console.error('❌ Upload error:', error)
+    //         this.uploading = false
+    //       },
+    //       async () => {
+    //         const url = await getDownloadURL(uploadTask.snapshot.ref)
+    //         fileURL = url
+    //         await set(newImageRef, {
+    //           url,
+    //           path: filePath,
+    //           uploadedBy: this.currentUser.id,
+    //           uploadedByName: this.currentUser.name,
+    //           createdAt: Date.now(),
+    //           source,
+    //           commentId: commentId || null,
+    //         })
+
+    //         this.uploading = false
+    //         this.uploadProgress = 0
+    //       },
+    //     )
+    //   } catch (err) {
+    //     console.error('❌ Upload failed:', err)
+    //     this.uploading = false
+    //   }
+    //   return fileURL
+    // },
     async uploadImage(file, source = 'DIRECT', commentId = null) {
-      if (!file) return
+      if (!file) return null
 
       this.uploading = true
       this.uploadProgress = 0
@@ -476,40 +536,51 @@ export default {
         const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
         const fileRef = storageRef(storage, filePath)
 
-        // 🔥 USE resumable upload
         const uploadTask = uploadBytesResumable(fileRef, file)
 
-        uploadTask.on(
-          'state_changed',
-          (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        // 🔥 Wrap in Promise
+        const fileURL = await new Promise((resolve, reject) => {
+          uploadTask.on(
+            'state_changed',
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+              this.uploadProgress = Math.round(progress)
+            },
+            (error) => {
+              console.error('❌ Upload error:', error)
+              this.uploading = false
+              reject(error)
+            },
+            async () => {
+              try {
+                const url = await getDownloadURL(uploadTask.snapshot.ref)
 
-            this.uploadProgress = Math.round(progress)
-          },
-          (error) => {
-            console.error('❌ Upload error:', error)
-            this.uploading = false
-          },
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref)
+                await set(newImageRef, {
+                  url,
+                  path: filePath,
+                  uploadedBy: this.currentUser.id,
+                  uploadedByName: this.currentUser.name,
+                  createdAt: Date.now(),
+                  source,
+                  commentId: commentId || null,
+                })
 
-            await set(newImageRef, {
-              url,
-              path: filePath,
-              uploadedBy: this.currentUser.id,
-              uploadedByName: this.currentUser.name,
-              createdAt: Date.now(),
-              source,
-              commentId: commentId || null,
-            })
+                this.uploading = false
+                this.uploadProgress = 0
 
-            this.uploading = false
-            this.uploadProgress = 0
-          },
-        )
+                resolve(url) // ✅ return URL here
+              } catch (err) {
+                reject(err)
+              }
+            },
+          )
+        })
+
+        return fileURL
       } catch (err) {
         console.error('❌ Upload failed:', err)
         this.uploading = false
+        return null
       }
     },
     async markNotificationAsRead(uid, notificationId) {
@@ -699,6 +770,7 @@ export default {
     async addComment() {
       if (!this.newComment.trim()) return
       const file = this.selectedCommentImage.file // set selected image
+
       const communityId = this.$route.params.communityId
       const taskId = this.$route.params.taskId
 
@@ -708,12 +780,21 @@ export default {
         const commentsRef = dbRef(db, `taskComments/${communityId}/${taskId}`)
         const newCommentRef = push(commentsRef)
 
+        // 🔥 Upload image if exists
+        let fileUrl = null
+        if (file) {
+          fileUrl = await this.uploadImage(file, 'COMMENT', newCommentRef.key)
+          this.selectedCommentImage.url = null
+          this.selectedCommentImage.file = null
+        }
+
         const comment = {
           text: textForStorage,
           userId: this.currentUser.id,
           userName: this.currentUser.name,
           createdAt: Date.now(),
           mentions: this.mentions,
+          url: fileUrl,
         }
 
         Object.keys(this.mentionMap).forEach((name) => {
@@ -725,12 +806,6 @@ export default {
         await set(newCommentRef, comment)
         this.newComment = ''
 
-        // 🔥 Upload image if exists
-        if (file) {
-          await this.uploadImage(file, 'COMMENT', newCommentRef.key)
-          this.selectedCommentImage.url = null
-          this.selectedCommentImage.file = null
-        }
         //Send Notification
         const mentionedUserIds = this.extractMentions(textForStorage)
         this.notifyMentionedMembers(mentionedUserIds, newCommentRef.key)
