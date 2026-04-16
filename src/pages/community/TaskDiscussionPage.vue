@@ -46,7 +46,7 @@
         <q-img
           :src="img.url"
           style="width: 80px; height: 80px; border-radius: 8px"
-          @click="openGallery(index)"
+          @click="openGallery(index, 'direct')"
         />
       </div>
     </div>
@@ -75,15 +75,14 @@
             <q-item-label caption class="text-grey">
               {{ formatDate(comment.createdAt) }}
             </q-item-label>
-
-            <q-item-label caption class="q-mt-xs comment-text text-black">
+            <q-item-label v-if="comment.url" caption class="text-grey">
               <q-img
-                v-if="comment.url"
                 :src="comment.url"
                 style="width: 80px; height: 80px; border-radius: 8px"
-                @click="openGallery(index)"
+                @click="openGallery(0, 'comment', comment.url)"
               />
-
+            </q-item-label>
+            <q-item-label caption class="q-mt-xs comment-text text-black">
               <span v-html="formatComment(comment.text)"></span>
             </q-item-label>
           </q-item-section>
@@ -103,15 +102,7 @@
               :src="selectedCommentImage.url"
               style="width: 80px; height: 80px; border-radius: 8px"
             />
-            <q-btn
-              icon="close"
-              size="sm"
-              round
-              dense
-              color="negative"
-              class="absolute-top-right"
-              @click="selectedCommentImage = null"
-            />
+            <q-btn icon="close" size="sm" round dense color="negative" @click="clearCommentImage" />
           </div>
           <q-input
             class="mention-input"
@@ -124,7 +115,26 @@
             @update:model-value="handleInput"
             @keyup="updateCaretPosition"
             @keydown="handleKeyDown"
-          />
+          >
+            <template v-slot:append>
+              <q-btn
+                v-if="!selectedCommentImage.url"
+                color="primary"
+                flat
+                round
+                icon="image"
+                @click="triggerCommentImage()"
+              />
+              <q-btn
+                flat
+                :disable="!newComment.trim()"
+                icon="send"
+                round
+                color="primary"
+                @click="addComment"
+              />
+            </template>
+          </q-input>
         </div>
 
         <!-- MENTION DROPDOWN -->
@@ -153,7 +163,6 @@
         </div>
       </div>
       <!-- ✅ IMAGE BUTTON (ADD HERE) -->
-      <q-btn color="primary" flat round icon="image" @click="triggerCommentImage()" />
 
       <!-- ✅ HIDDEN FILE INPUT -->
       <input
@@ -163,14 +172,7 @@
         accept="image/*"
         @change="onCommentImageSelected"
       />
-      <q-btn
-        flat
-        :disable="!newComment.trim()"
-        icon="send"
-        round
-        color="primary"
-        @click="addComment"
-      />
+
       <!-- <q-btn label="Test Ref" @click="testRef" /> -->
     </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
@@ -190,23 +192,23 @@
                 <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
               </div>
             </q-carousel-slide> -->
-            <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
+            <q-carousel-slide v-for="(img, i) in currentImages" :name="i" :key="i">
               <div class="full-height flex flex-center relative-position">
                 <!-- IMAGE -->
                 <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
 
                 <!-- 🔥 LEFT BUTTON -->
-                <q-btn
+                <!-- <q-btn
                   v-if="images.length > 1"
                   round
                   dense
                   icon="chevron_left"
                   class="nav-btn left-btn"
                   @click.stop="prevImage"
-                />
+                /> -->
 
                 <!-- 🔥 RIGHT BUTTON -->
-                <q-btn
+                <!-- <q-btn
                   flat
                   v-if="images.length > 1"
                   round
@@ -214,7 +216,7 @@
                   icon="chevron_right"
                   class="nav-btn right-btn"
                   @click.stop="nextImage"
-                />
+                /> -->
               </div>
             </q-carousel-slide>
           </q-carousel>
@@ -226,7 +228,7 @@
 
             <!-- 🔹 CENTER: COUNT -->
             <div class="absolute-center text-white text-subtitle2">
-              {{ currentIndex + 1 }} / {{ images.length }}
+              {{ currentIndex + 1 }} / {{ currentImages.length }}
             </div>
 
             <!-- 🔹 RIGHT: SHARE -->
@@ -292,6 +294,7 @@ export default {
       selectedMentionIndex: 0,
       //Files/Image related data below
       images: [],
+      currentImages: [],
       uploading: false,
       uploadProgress: 0,
       selectedCommentImage: { file: null, url: null },
@@ -410,7 +413,14 @@ export default {
       this.touchEndY = 0
     },
 
-    openGallery(index) {
+    openGallery(index, origin, url = null) {
+      if (origin === 'direct') {
+        this.currentImages = this.images
+      } else if (origin === 'comment') {
+        const img = { url: url }
+        this.currentImages = []
+        this.currentImages.push(img)
+      }
       this.currentIndex = index
       this.galleryOpen = true
     },
@@ -441,6 +451,10 @@ export default {
         // console.log('SELECTED COMMENT FILE: ' + JSON.stringify(this.selectedCommentImage.name))
         // console.log('SELECTED COMMENT FILE URL: ' + JSON.stringify(this.selectedCommentImage.url))
       }
+    },
+    clearCommentImage() {
+      this.selectedCommentImage.file = null
+      this.selectedCommentImage.url = null
     },
     triggerFileInput() {
       // console.log(JSON.stringify(this.$refs.fileInput))
