@@ -766,6 +766,69 @@ export default {
     //   }
     //   return fileURL
     // },
+    // async uploadImage(file, source = 'DIRECT', commentId = null) {
+    //   if (!file) return null
+
+    //   this.uploading = true
+    //   this.uploadProgress = 0
+
+    //   try {
+    //     const storage = getStorage()
+
+    //     const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
+    //     const newImageRef = push(imagesRef)
+    //     const imageId = newImageRef.key
+
+    //     const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
+    //     const fileRef = storageRef(storage, filePath)
+
+    //     const uploadTask = uploadBytesResumable(fileRef, file)
+
+    //     // 🔥 Wrap in Promise
+    //     const fileURL = await new Promise((resolve, reject) => {
+    //       uploadTask.on(
+    //         'state_changed',
+    //         (snapshot) => {
+    //           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+    //           this.uploadProgress = Math.round(progress)
+    //         },
+    //         (error) => {
+    //           console.error('❌ Upload error:', error)
+    //           this.uploading = false
+    //           reject(error)
+    //         },
+    //         async () => {
+    //           try {
+    //             const url = await getDownloadURL(uploadTask.snapshot.ref)
+
+    //             await set(newImageRef, {
+    //               url,
+    //               path: filePath,
+    //               uploadedBy: this.currentUser.id,
+    //               uploadedByName: this.currentUser.name,
+    //               createdAt: Date.now(),
+    //               source,
+    //               commentId: commentId || null,
+    //             })
+
+    //             this.uploading = false
+    //             this.uploadProgress = 0
+
+    //             resolve(url) // ✅ return URL here
+    //           } catch (err) {
+    //             reject(err)
+    //           }
+    //         },
+    //       )
+    //     })
+
+    //     return fileURL
+    //   } catch (err) {
+    //     console.error('❌ Upload failed:', err)
+    //     this.uploading = false
+    //     return null
+    //   }
+    // },
     async uploadImage(file, source = 'DIRECT', commentId = null) {
       if (!file) return null
 
@@ -775,6 +838,9 @@ export default {
       try {
         const storage = getStorage()
 
+        // 🔥 COMPRESS FIRST
+        const compressedFile = await this.compressImage(file)
+
         const imagesRef = dbRef(db, `taskImages/${this.communityId}/${this.taskId}`)
         const newImageRef = push(imagesRef)
         const imageId = newImageRef.key
@@ -782,9 +848,9 @@ export default {
         const filePath = `task-images/${this.communityId}/${this.taskId}/${imageId}_${file.name}`
         const fileRef = storageRef(storage, filePath)
 
-        const uploadTask = uploadBytesResumable(fileRef, file)
+        // 🔥 Upload compressed file instead
+        const uploadTask = uploadBytesResumable(fileRef, compressedFile)
 
-        // 🔥 Wrap in Promise
         const fileURL = await new Promise((resolve, reject) => {
           uploadTask.on(
             'state_changed',
@@ -814,7 +880,7 @@ export default {
                 this.uploading = false
                 this.uploadProgress = 0
 
-                resolve(url) // ✅ return URL here
+                resolve(url)
               } catch (err) {
                 reject(err)
               }
@@ -828,6 +894,58 @@ export default {
         this.uploading = false
         return null
       }
+    },
+    async compressImage(file, quality = 0.7, maxWidth = 1280) {
+      if (file.size < 200 * 1024) {
+        return file
+      }
+      return new Promise((resolve, reject) => {
+        const img = new Image()
+        const reader = new FileReader()
+
+        reader.readAsDataURL(file)
+
+        reader.onload = (e) => {
+          img.src = e.target.result
+        }
+
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+
+          let width = img.width
+          let height = img.height
+
+          // 🔥 Resize if too large
+          if (width > maxWidth) {
+            height = (maxWidth / width) * height
+            width = maxWidth
+          }
+
+          canvas.width = width
+          canvas.height = height
+
+          ctx.drawImage(img, 0, 0, width, height)
+
+          // 🔥 Convert to compressed blob
+          canvas.toBlob(
+            (blob) => {
+              if (!blob) return reject(new Error('Compression failed'))
+
+              const compressedFile = new File([blob], file.name, {
+                type: 'image/jpeg',
+                lastModified: Date.now(),
+              })
+
+              resolve(compressedFile)
+            },
+            'image/jpeg',
+            quality, // 0.6–0.8 is good balance
+          )
+        }
+
+        img.onerror = reject
+      })
     },
     async markNotificationAsRead(uid, notificationId) {
       try {
