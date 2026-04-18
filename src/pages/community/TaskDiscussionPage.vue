@@ -247,17 +247,21 @@
           </q-carousel>
         </div>
         <q-footer class="text-white">
-          <q-toolbar class="relative-position">
-            <!-- 🔹 LEFT: BACK -->
-            <q-btn flat label="close" dense @click="galleryOpen = false" />
-
-            <!-- 🔹 CENTER: COUNT -->
-            <div class="absolute-center text-white text-subtitle2">
-              {{ currentIndex + 1 }} / {{ currentImages.length }}
+          <q-toolbar class="row items-center">
+            <!-- LEFT -->
+            <div>
+              <q-btn flat label="close" @click="galleryOpen = false" />
             </div>
 
-            <!-- 🔹 RIGHT: SHARE -->
-            <div class="absolute-right q-pr-sm">
+            <!-- CENTER -->
+            <div class="col flex flex-center q-gutter-sm">
+              <q-btn icon="chevron_left" round dense @click.stop="prevImage" />
+              <div>{{ currentIndex + 1 }} / {{ currentImages.length }}</div>
+              <q-btn icon="chevron_right" round dense @click.stop="nextImage" />
+            </div>
+
+            <!-- RIGHT -->
+            <div>
               <q-btn flat round icon="share" @click="shareImage" />
             </div>
           </q-toolbar>
