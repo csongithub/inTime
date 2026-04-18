@@ -14,6 +14,9 @@
     </div>
 
     <!-- IMAGE LIBRARY -->
+    <div class="row items-center justify-between q-mb-xs">
+      <div class="text-subtitle2 text-grey-8">Images ({{ images.length }})</div>
+    </div>
     <div class="image-grid q-mt-xs">
       <div class="upload-tile" @click="!uploading && triggerFileInput()">
         <!-- 🔥 SHOW LOADER -->
@@ -39,9 +42,17 @@
       </div>
 
       <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
-
+      <input
+        type="file"
+        ref="cameraInput"
+        hidden
+        accept="image/*"
+        capture="environment"
+        @change="handleFileChange"
+      />
       <!-- <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" /> -->
       <!-- IMAGES -->
+
       <div v-for="(img, index) in images" :key="img.id" class="q-mr-sm">
         <q-img
           :src="img.url"
@@ -186,7 +197,13 @@
 
         <!-- 🔥 IMAGE AREA -->
         <div class="col">
-          <q-carousel v-model="currentIndex" swipeable animated infinite class="full-height">
+          <q-carousel
+            v-model="currentIndex"
+            :swipeable="!isZoomed"
+            animated
+            infinite
+            class="full-height"
+          >
             <!-- <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
               <div class="full-height flex flex-center">
                 <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
@@ -195,8 +212,16 @@
             <q-carousel-slide v-for="(img, i) in currentImages" :name="i" :key="i">
               <div class="full-height flex flex-center relative-position">
                 <!-- IMAGE -->
-                <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
-
+                <!-- <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" /> -->
+                <div
+                  class="zoom-container"
+                  @touchstart="handleTouchStart($event, i)"
+                  @touchmove="handleTouchMove($event, i)"
+                  @touchend="handleTouchEnd($event, i)"
+                  @dblclick="onDoubleTap(i)"
+                >
+                  <img :src="img.url" class="zoom-image" :style="getZoomStyle(i)" />
+                </div>
                 <!-- 🔥 LEFT BUTTON -->
                 <!-- <q-btn
                   v-if="images.length > 1"
@@ -239,6 +264,37 @@
         </q-footer>
       </div>
     </q-dialog>
+    <q-dialog v-model="uploadSheet" position="bottom" @hide="onSheetClose">
+      <q-card class="upload-sheet">
+        <!-- TITLE -->
+        <div class="text-subtitle1 text-center q-pa-md text-grey-8">Upload Image</div>
+
+        <q-separator />
+
+        <!-- CAMERA -->
+        <q-item clickable v-ripple @click="selectUploadOption('camera')">
+          <q-avatar color="grey-2" text-color="primary" size="40px">
+            <q-icon name="photo_camera" />
+          </q-avatar>
+          <q-item-section>Open Camera</q-item-section>
+        </q-item>
+
+        <!-- GALLERY -->
+        <q-item clickable v-ripple @click="selectUploadOption('gallery')">
+          <q-avatar color="grey-2" text-color="primary" size="40px">
+            <q-icon name="image" />
+          </q-avatar>
+          <q-item-section>Choose Image</q-item-section>
+        </q-item>
+
+        <q-separator />
+
+        <!-- CANCEL -->
+        <q-item clickable v-ripple @click="uploadSheet = false">
+          <q-item-section class="text-center text-negative"> Cancel </q-item-section>
+        </q-item>
+      </q-card>
+    </q-dialog>
 
     <!-- {{ JSON.stringify(communityMembers) }} -->
   </q-page>
@@ -269,7 +325,12 @@ export default {
       this.scrollToComment()
     },
   },
-  computed: {},
+  computed: {
+    isZoomed() {
+      const state = this.zoomStates[this.currentIndex]
+      return state && state.scale > 1
+    },
+  },
   data() {
     return {
       task: null,
@@ -304,6 +365,8 @@ export default {
 
       touchStartY: 0,
       touchEndY: 0,
+      uploadSheet: false,
+      zoomStates: {},
     }
   },
 
@@ -323,6 +386,172 @@ export default {
   },
 
   methods: {
+    initZoom(i) {
+      if (!this.zoomStates[i]) {
+        this.zoomStates[i] = {
+          scale: 1,
+          startDistance: 0,
+          lastScale: 1,
+          translateX: 0,
+          translateY: 0,
+          startX: 0,
+          startY: 0,
+        }
+      }
+    },
+    handleTouchStart(e, i) {
+      this.initZoom(i)
+
+      const state = this.zoomStates[i]
+
+      // always track start for swipe-down
+      this.touchStartY = e.touches[0].clientY
+      this.touchEndY = e.touches[0].clientY
+
+      // only handle zoom logic if 2 fingers OR already zoomed
+      if (e.touches.length === 2 || state.scale > 1) {
+        this.onZoomStart(e, i)
+      }
+    },
+    handleTouchMove(e, i) {
+      const state = this.zoomStates[i]
+
+      this.touchEndY = e.touches[0].clientY
+
+      // ✅ ONLY BLOCK when zoomed
+      if (e.touches.length === 2 || state.scale > 1) {
+        e.preventDefault()
+        this.onZoomMove(e, i)
+      }
+    },
+    handleTouchEnd(e, i) {
+      const state = this.zoomStates[i]
+
+      this.onZoomEnd(e, i)
+
+      const distance = this.touchEndY - this.touchStartY
+
+      // ✅ allow swipe-down ONLY when NOT zoomed
+      if (!state || state.scale === 1) {
+        if (distance > 80) {
+          this.galleryDialog = false
+        }
+      }
+    },
+    onZoomStart(e, i) {
+      this.initZoom(i)
+      const state = this.zoomStates[i]
+
+      if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        state.startDistance = Math.sqrt(dx * dx + dy * dy)
+      } else {
+        state.startX = e.touches[0].clientX - state.translateX
+        state.startY = e.touches[0].clientY - state.translateY
+      }
+    },
+    onZoomMove(e, i) {
+      const state = this.zoomStates[i]
+
+      if (!state) return
+
+      if (e.touches.length === 2) {
+        // pinch zoom
+        e.preventDefault() // ✅ block scroll only here
+
+        const dx = e.touches[0].clientX - e.touches[1].clientX
+        const dy = e.touches[0].clientY - e.touches[1].clientY
+        const distance = Math.sqrt(dx * dx + dy * dy)
+
+        let scale = (distance / state.startDistance) * state.lastScale
+        state.scale = Math.min(Math.max(scale, 1), 4)
+      } else if (state.scale > 1) {
+        // drag only when zoomed
+        e.preventDefault() // ✅ block carousel swipe
+
+        state.translateX = e.touches[0].clientX - state.startX
+        state.translateY = e.touches[0].clientY - state.startY
+      }
+    },
+    onZoomEnd(e, i) {
+      const state = this.zoomStates[i]
+
+      state.lastScale = state.scale
+
+      if (state.scale <= 1) {
+        state.scale = 1
+        state.lastScale = 1
+        state.translateX = 0
+        state.translateY = 0
+      }
+    },
+    onDoubleTap(i) {
+      this.initZoom(i)
+      const state = this.zoomStates[i]
+
+      if (state.scale === 1) {
+        state.scale = 2
+        state.lastScale = 2
+      } else {
+        state.scale = 1
+        state.lastScale = 1
+        state.translateX = 0
+        state.translateY = 0
+      }
+    },
+    getZoomStyle(i) {
+      const state = this.zoomStates[i] || { scale: 1, translateX: 0, translateY: 0 }
+
+      return {
+        transform: `scale(${state.scale}) translate(${state.translateX}px, ${state.translateY}px)`,
+        transition: state.scale === 1 ? '0.3s' : 'none',
+      }
+    },
+    selectUploadOption(type) {
+      this.uploadSheet = false
+
+      if (type === 'camera') {
+        this.$refs.cameraInput?.click()
+      } else {
+        this.$refs.fileInput?.click()
+      }
+    },
+    // openUploadOptions() {
+    //   this.$q
+    //     .bottomSheet({
+    //       // message: 'Upload Image',
+    //       // color: 'primary',
+    //       actions: [
+    //         {
+    //           label: 'Open Camera',
+    //           icon: 'photo_camera',
+    //           id: 'camera',
+    //           color: 'primary',
+    //         },
+    //         {
+    //           label: 'Choose Image',
+    //           icon: 'image',
+    //           id: 'gallery',
+    //           color: 'primary',
+    //         },
+    //       ],
+    //     })
+    //     .onOk((action) => {
+    //       if (action.id === 'camera') {
+    //         this.openCamera()
+    //       } else {
+    //         this.openGalleryUpload()
+    //       }
+    //     })
+    // },
+    // openCamera() {
+    //   this.$refs.cameraInput?.click()
+    // },
+
+    // openGalleryUpload() {
+    //   this.$refs.fileInput?.click()
+    // },
     testRef() {
       console.log('REF:', this.$refs.commentImage)
     },
@@ -402,15 +631,16 @@ export default {
     },
 
     onTouchEnd() {
-      const diffY = this.touchEndY - this.touchStartY
+      const distance = this.touchEndY - this.touchStartY
 
-      // 🔥 Only close if strong vertical swipe
-      if (diffY > 120) {
-        this.galleryOpen = false
+      const state = this.zoomStates[this.currentIndex]
+
+      // ❌ DO NOT close if zoomed
+      if (state && state.scale > 1) return
+
+      if (distance > 80) {
+        this.uploadSheet = false
       }
-
-      this.touchStartY = 0
-      this.touchEndY = 0
     },
 
     openGallery(index, origin, url = null) {
@@ -448,8 +678,6 @@ export default {
       if (file) {
         this.selectedCommentImage.file = file
         this.selectedCommentImage.url = URL.createObjectURL(file)
-        // console.log('SELECTED COMMENT FILE: ' + JSON.stringify(this.selectedCommentImage.name))
-        // console.log('SELECTED COMMENT FILE URL: ' + JSON.stringify(this.selectedCommentImage.url))
       }
     },
     clearCommentImage() {
@@ -457,8 +685,7 @@ export default {
       this.selectedCommentImage.url = null
     },
     triggerFileInput() {
-      // console.log(JSON.stringify(this.$refs.fileInput))
-      this.$refs.fileInput.click()
+      this.uploadSheet = true
     },
 
     handleFileChange(e) {
@@ -478,7 +705,8 @@ export default {
           ...snapshot.val(),
         }
 
-        this.images.push(img)
+        // this.images.push(img)
+        this.images.unshift(img)
       })
     },
     // async uploadImage(file, source = 'DIRECT', commentId = null) {
@@ -1018,5 +1246,23 @@ export default {
 
 .right-btn {
   right: 10px;
+}
+.upload-sheet {
+  border-top-left-radius: 16px;
+  border-top-right-radius: 16px;
+  padding-bottom: 10px;
+  box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+.zoom-container {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  touch-action: pan-y pan-x; /* allow gestures */
+}
+
+.zoom-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 </style>
