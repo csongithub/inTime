@@ -42,14 +42,14 @@
       </div>
 
       <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" />
-      <input
+      <!-- <input
         type="file"
         ref="cameraInput"
         hidden
         accept="image/*"
         capture="environment"
         @change="handleFileChange"
-      />
+      /> -->
       <!-- <input type="file" ref="fileInput" hidden accept="image/*" @change="handleFileChange" /> -->
       <!-- IMAGES -->
 
@@ -310,6 +310,7 @@ import { db } from 'src/boot/firebase'
 import { ref as dbRef, update, onValue, get, push, set, onChildAdded } from 'firebase/database'
 import { getAuth } from 'firebase/auth'
 import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import {
   getStorage,
   ref as storageRef,
@@ -512,50 +513,35 @@ export default {
         transition: state.scale === 1 ? '0.3s' : 'none',
       }
     },
-    selectUploadOption(type) {
+    async selectUploadOption(type) {
       this.uploadSheet = false
 
-      if (type === 'camera') {
-        this.$refs.cameraInput?.click()
-      } else {
-        this.$refs.fileInput?.click()
+      // 📱 MOBILE APP
+      if (this.$q.platform.is.capacitor || this.$q.platform.is.mobile) {
+        await this.handleMobileUpload(type)
+      }
+      // 💻 WEB
+      else {
+        this.$refs.fileInput.click()
       }
     },
-    // openUploadOptions() {
-    //   this.$q
-    //     .bottomSheet({
-    //       // message: 'Upload Image',
-    //       // color: 'primary',
-    //       actions: [
-    //         {
-    //           label: 'Open Camera',
-    //           icon: 'photo_camera',
-    //           id: 'camera',
-    //           color: 'primary',
-    //         },
-    //         {
-    //           label: 'Choose Image',
-    //           icon: 'image',
-    //           id: 'gallery',
-    //           color: 'primary',
-    //         },
-    //       ],
-    //     })
-    //     .onOk((action) => {
-    //       if (action.id === 'camera') {
-    //         this.openCamera()
-    //       } else {
-    //         this.openGalleryUpload()
-    //       }
-    //     })
-    // },
-    // openCamera() {
-    //   this.$refs.cameraInput?.click()
-    // },
 
-    // openGalleryUpload() {
-    //   this.$refs.fileInput?.click()
-    // },
+    async handleMobileUpload(type) {
+      try {
+        const image = await Camera.getPhoto({
+          quality: 90,
+          resultType: CameraResultType.Uri,
+          source: type === 'camera' ? CameraSource.Camera : CameraSource.Photos,
+        })
+
+        if (image?.webPath) {
+          const file = await this.convertToFile(image.webPath)
+          this.uploadImage(file)
+        }
+      } catch (err) {
+        console.log('Cancelled or error:', err)
+      }
+    },
     testRef() {
       console.log('REF:', this.$refs.commentImage)
     },
@@ -574,33 +560,7 @@ export default {
         this.currentIndex = 0 // loop
       }
     },
-    // async shareImage() {
-    //   try {
-    //     const img = this.images[this.currentIndex]
-    //     if (!img) return
 
-    //     const response = await fetch(img.url)
-    //     const blob = await response.blob()
-
-    //     const file = new File([blob], 'image.jpg', { type: blob.type })
-
-    //     if (navigator.canShare && navigator.canShare({ files: [file] })) {
-    //       await navigator.share({
-    //         files: [file],
-    //         title: 'Task Image',
-    //       })
-    //     } else {
-    //       // fallback
-    //       await navigator.clipboard.writeText(img.url)
-    //       this.$q.notify({
-    //         message: 'Image link copied',
-    //         color: 'positive',
-    //       })
-    //     }
-    //   } catch (err) {
-    //     console.error('❌ Share failed:', err)
-    //   }
-    // },
     async shareImage() {
       try {
         const img = this.images[this.currentIndex]
@@ -691,11 +651,8 @@ export default {
     triggerFileInput() {
       this.uploadSheet = true
     },
-
     handleFileChange(e) {
-      // console.log('FILE: ' + JSON.stringify(e))
       const file = e.target.files[0]
-      // console.log('SELECTED  FILE: ' + JSON.stringify(file.name))
       if (file) {
         this.uploadImage(file, 'DIRECT')
       }
