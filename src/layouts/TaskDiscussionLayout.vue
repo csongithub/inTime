@@ -12,6 +12,7 @@
     <q-page-container>
       <router-view />
     </q-page-container>
+    <q-footer bordered :style="footerStyle"> </q-footer>
   </q-layout>
 </template>
 
@@ -21,12 +22,38 @@ export default {
 
   components: {},
   watch: {},
-  computed: {},
+  computed: {
+    footerStyle() {
+      let inset = this.bottomInset
+
+      // ✅ Ignore fake/small insets (gesture mode)
+      if (inset < 30) {
+        inset = 0
+      } else {
+        // real nav bar → normalize
+        inset = Math.min(inset, 60) - 8
+      }
+
+      return {
+        paddingBottom: inset + 'px',
+      }
+    },
+  },
   data() {
-    return {}
+    return {
+      bottomInset: 0,
+    }
   },
 
-  mounted() {},
+  mounted() {
+    // initial value
+    this.bottomInset = window.androidBottomInset || 0
+
+    // listen for updates
+    document.addEventListener('android-inset-updated', () => {
+      this.bottomInset = window.androidBottomInset || 0
+    })
+  },
 
   methods: {
     goBack() {

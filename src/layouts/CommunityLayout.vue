@@ -24,7 +24,7 @@
     </q-page-container>
 
     <!-- Bottom Tabs -->
-    <q-footer bordered>
+    <q-footer bordered :style="footerStyle">
       <q-tabs
         v-model="tab"
         dense
@@ -63,11 +63,36 @@ export default {
     return {
       tab: 'tasks',
       communityName: '',
+      bottomInset: 0,
     }
   },
+  computed: {
+    footerStyle() {
+      let inset = this.bottomInset
 
+      // ✅ Ignore fake/small insets (gesture mode)
+      if (inset < 30) {
+        inset = 0
+      } else {
+        // real nav bar → normalize
+        inset = Math.min(inset, 60) - 8
+      }
+
+      return {
+        paddingBottom: inset + 'px',
+      }
+    },
+  },
   mounted() {
     this.fetchCommunity()
+
+    // initial value
+    this.bottomInset = window.androidBottomInset || 0
+
+    // listen for updates
+    document.addEventListener('android-inset-updated', () => {
+      this.bottomInset = window.androidBottomInset || 0
+    })
   },
 
   methods: {
