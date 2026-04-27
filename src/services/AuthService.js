@@ -4,7 +4,7 @@ import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } f
 import { Notify } from 'quasar'
 
 export async function signup(name, mobile, password) {
-  const fakeEmail = mobile + '@taskapp.com'
+  const fakeEmail = mobile + '@intime.com'
 
   if (await checkMobileExists(mobile)) {
     Notify.create({
@@ -44,7 +44,7 @@ async function checkMobileExists(mobile) {
 }
 
 export async function login(mobile, password) {
-  const fakeEmail = mobile + '@taskapp.com'
+  const fakeEmail = mobile + '@intime.com'
   const res = await signInWithEmailAndPassword(auth, fakeEmail, password)
   return res.user
 }
