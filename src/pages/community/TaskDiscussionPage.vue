@@ -188,85 +188,71 @@
       <!-- <q-btn label="Test Ref" @click="testRef" /> -->
     </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
-      <div
-        class="column full-height bg-black"
-        @touchstart="onTouchStart"
-        @touchmove="onTouchMove"
-        @touchend="onTouchEnd"
-      >
-        <!-- 🔥 HEADER (LIKE YOUR APP HEADER) -->
+      <div class="gallery-root">
+        <!-- 🔥 TOP BAR -->
+        <!-- <div class="top-bar">
+          <q-btn round dense flat icon="close" class="glass-btn" @click="galleryOpen = false" />
+        </div> -->
 
         <!-- 🔥 IMAGE AREA -->
-        <div class="col">
-          <q-carousel
-            v-model="currentIndex"
-            :swipeable="!isZoomed"
-            animated
-            infinite
-            class="full-height"
-          >
-            <!-- <q-carousel-slide v-for="(img, i) in images" :name="i" :key="img.id">
-              <div class="full-height flex flex-center">
-                <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" />
+        <q-carousel
+          v-model="currentIndex"
+          :swipeable="!isZoomed"
+          animated
+          infinite
+          class="gallery-carousel"
+        >
+          <q-carousel-slide v-for="(img, i) in currentImages" :name="i" :key="i">
+            <div class="slide-container">
+              <!-- IMAGE -->
+              <div
+                class="zoom-container"
+                @touchstart="handleTouchStart($event, i)"
+                @touchmove="handleTouchMove($event, i)"
+                @touchend="handleTouchEnd($event, i)"
+                @dblclick="onDoubleTap(i)"
+              >
+                <img :src="img.url" class="zoom-image" :style="getZoomStyle(i)" />
               </div>
-            </q-carousel-slide> -->
-            <q-carousel-slide v-for="(img, i) in currentImages" :name="i" :key="i">
-              <div class="full-height flex flex-center relative-position">
-                <!-- IMAGE -->
-                <!-- <q-img :src="img.url" fit="contain" style="max-height: 100%; max-width: 100%" /> -->
-                <div
-                  class="zoom-container"
-                  @touchstart="handleTouchStart($event, i)"
-                  @touchmove="handleTouchMove($event, i)"
-                  @touchend="handleTouchEnd($event, i)"
-                  @dblclick="onDoubleTap(i)"
-                >
-                  <img :src="img.url" class="zoom-image" :style="getZoomStyle(i)" />
-                </div>
-                <!-- 🔥 LEFT BUTTON -->
-                <!-- <q-btn
-                  v-if="images.length > 1"
-                  round
-                  dense
-                  icon="chevron_left"
-                  class="nav-btn left-btn"
-                  @click.stop="prevImage"
-                /> -->
 
-                <!-- 🔥 RIGHT BUTTON -->
-                <!-- <q-btn
-                  flat
-                  v-if="images.length > 1"
-                  round
-                  dense
-                  icon="chevron_right"
-                  class="nav-btn right-btn"
-                  @click.stop="nextImage"
-                /> -->
-              </div>
-            </q-carousel-slide>
-          </q-carousel>
+              <!-- LEFT NAV -->
+              <q-btn
+                v-if="currentImages.length > 1"
+                round
+                dense
+                icon="chevron_left"
+                class="nav-btn left"
+                @click.stop="prevImage"
+              />
+
+              <!-- RIGHT NAV -->
+              <q-btn
+                v-if="currentImages.length > 1"
+                round
+                dense
+                icon="chevron_right"
+                class="nav-btn right"
+                @click.stop="nextImage"
+              />
+            </div>
+          </q-carousel-slide>
+        </q-carousel>
+
+        <!-- 🔥 BOTTOM FLOATING BAR -->
+        <div class="bottom-bar" :style="dialogFooterStyle">
+          <!-- LEFT -->
+          <div class="side">
+            <q-btn flat round icon="share" class="glass-btn" @click="shareImage" />
+          </div>
+
+          <!-- CENTER -->
+          <div class="counter">{{ currentIndex + 1 }} / {{ currentImages.length }}</div>
+
+          <!-- RIGHT -->
+          <div class="side">
+            <q-btn flat round icon="close" class="glass-btn" @click="galleryOpen = false" />
+          </div>
         </div>
-        <q-footer class="text-white">
-          <q-toolbar class="row items-center">
-            <!-- LEFT -->
-            <div>
-              <q-btn flat label="close" @click="galleryOpen = false" />
-            </div>
-
-            <!-- CENTER -->
-            <div class="col flex flex-center q-gutter-sm">
-              <q-btn icon="chevron_left" round dense @click.stop="prevImage" />
-              <div>{{ currentIndex + 1 }} / {{ currentImages.length }}</div>
-              <q-btn icon="chevron_right" round dense @click.stop="nextImage" />
-            </div>
-
-            <!-- RIGHT -->
-            <div>
-              <q-btn flat round icon="share" @click="shareImage" />
-            </div>
-          </q-toolbar>
-        </q-footer>
       </div>
     </q-dialog>
     <q-dialog v-model="uploadSheet" position="bottom" @hide="onSheetClose">
@@ -336,6 +322,20 @@ export default {
       const state = this.zoomStates[this.currentIndex]
       return state && state.scale > 1
     },
+    dialogFooterStyle() {
+      let inset = this.bottomInset || window.androidBottomInset || 0
+
+      // ignore fake inset (gesture mode)
+      if (inset < 30) {
+        inset = 0
+      } else {
+        inset = Math.min(inset, 60) - 8
+      }
+
+      return {
+        paddingBottom: inset + 'px',
+      }
+    },
   },
   data() {
     return {
@@ -373,6 +373,7 @@ export default {
       touchEndY: 0,
       uploadSheet: false,
       zoomStates: {},
+      bottomInset: 0,
     }
   },
 
@@ -1238,5 +1239,88 @@ export default {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+}
+
+.gallery-root {
+  height: 100%;
+  background: black;
+  position: relative;
+  overflow: hidden;
+}
+
+/* TOP BAR */
+.top-bar {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+}
+
+/* CAROUSEL */
+.gallery-carousel {
+  height: 100%;
+}
+
+.slide-container {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* NAV BUTTONS */
+.nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-btn.left {
+  left: 12px;
+}
+
+.nav-btn.right {
+  right: 12px;
+}
+
+/* BOTTOM BAR */
+.bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* COUNTER */
+.counter {
+  color: white;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+/* GLASS BUTTON */
+.glass-btn {
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+}
+
+/* IMAGE */
+.zoom-image {
+  max-width: 100%;
+  max-height: 100%;
 }
 </style>
