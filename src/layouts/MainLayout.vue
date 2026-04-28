@@ -33,7 +33,7 @@
       <router-view />
     </q-page-container>
     <!-- Footer -->
-    <q-footer bordered :style="footerStyle" class="bg-white">
+    <q-footer :style="footerStyle" class="bg-primary">
       <div style="height: 56px"></div>
     </q-footer>
   </q-layout>
@@ -97,6 +97,9 @@ export default {
   },
 
   mounted() {
+    // initial value
+    this.bottomInset = window.androidBottomInset || 0
+
     const uid = auth.currentUser.uid
 
     //Initatite Firebase Cloud Messaging

@@ -105,7 +105,86 @@
     <q-separator />
 
     <!-- ADD COMMENT -->
+    <div class="row q-pa-sm items-center q-gutter-sm">
+      <div class="col relative-position">
+        <div>
+          <!-- ✅ IMAGE PREVIEW (ADD HERE) -->
+          <!-- <div v-if="selectedCommentImage.url" class="q-mb-sm">
+            <q-img
+              :src="selectedCommentImage.url"
+              style="width: 80px; height: 80px; border-radius: 8px"
+            />
+            <q-btn icon="close" size="sm" round dense color="negative" @click="clearCommentImage" />
+          </div> -->
+          <!-- <q-input
+            class="mention-input"
+            ref="commentInput"
+            v-model="newComment"
+            dense
+            autogrow
+            type="textarea"
+            placeholder="Write a comment..."
+            @update:model-value="handleInput"
+            @keyup="updateCaretPosition"
+            @keydown="handleKeyDown"
+          >
+            <template v-slot:append>
+              <q-btn
+                v-if="!selectedCommentImage.url"
+                color="primary"
+                flat
+                round
+                icon="image"
+                @click="triggerCommentImage()"
+              />
+              <q-btn
+                flat
+                :disable="!newComment.trim()"
+                icon="send"
+                round
+                color="primary"
+                @click="addComment"
+              />
+            </template>
+          </q-input> -->
+        </div>
 
+        <!-- MENTION DROPDOWN -->
+        <!-- <div
+          v-if="showMentionMenu"
+          class="mention-dropdown shadow-4"
+          :style="{
+            top: dropdownY + 'px',
+            left: dropdownX + 'px',
+          }"
+        >
+          <q-list dense>
+            <q-item
+              v-for="(user, index) in mentionList"
+              :key="user.id"
+              clickable
+              :active="index === selectedMentionIndex"
+              active-class="mention-active"
+              @click="insertMention(user)"
+            >
+              <q-item-section>
+                {{ user.name }}
+              </q-item-section>
+            </q-item>
+          </q-list>
+        </div> -->
+      </div>
+      <!-- ✅ IMAGE BUTTON (ADD HERE) -->
+
+      <!-- ✅ HIDDEN FILE INPUT -->
+      <!-- <input
+        type="file"
+        ref="commentImage"
+        hidden
+        accept="image/*"
+        @change="onCommentImageSelected"
+      /> -->
+    </div>
     <q-dialog v-model="galleryOpen" maximized persistent>
       <div class="gallery-root">
         <!-- 🔥 TOP BAR -->
@@ -158,7 +237,7 @@
         </q-carousel>
 
         <!-- 🔥 BOTTOM FLOATING BAR -->
-        <div class="bottom-bar" :style="dialogFooterStyle">
+        <div class="bottom-bar bg-primary" :style="dialogFooterStyle">
           <!-- LEFT -->
           <div class="side">
             <q-btn flat round icon="share" class="glass-btn" @click="shareImage" />
@@ -206,12 +285,12 @@
       </q-card>
     </q-dialog>
 
+    <!-- {{ JSON.stringify(communityMembers) }} -->
     <q-footer :style="footerStyle" class="bg-primary">
-      <div class="row items-center q-gutter-sm">
-        <div class="col relative-position">
-          <div>
-            <!-- ✅ IMAGE PREVIEW (ADD HERE) -->
-            <div v-if="selectedCommentImage.url" class="q-ma-sm">
+      <div class="chat-input-bar bg-primary full-width">
+        <div class="">
+          <div class="">
+            <div v-if="selectedCommentImage.url" class="q-mb-sm">
               <q-img
                 :src="selectedCommentImage.url"
                 style="width: 80px; height: 80px; border-radius: 8px"
@@ -226,81 +305,74 @@
               />
             </div>
 
-            <div class="chat-input-bar bg-primary">
-              <q-input
-                class="chat-input"
-                ref="commentInput"
-                v-model="newComment"
-                dense
-                borderless
-                autogrow
-                type="textarea"
-                placeholder="Message"
-                @update:model-value="handleInput"
-                @keyup="updateCaretPosition"
-                @keydown="handleKeyDown"
-              >
-                <template v-slot:append>
-                  <q-btn
-                    flat
-                    round
-                    dense
-                    icon="image"
-                    class="icon-btn"
-                    @click="triggerCommentImage"
-                  />
-                  <!-- SEND BUTTON -->
-                  <q-btn
-                    round
-                    class="send-btn"
-                    :disable="!newComment.trim()"
-                    icon="send"
-                    @click="addComment"
-                    color="primary"
-                    size="10px"
-                  />
-                </template>
-              </q-input>
+            <!-- MENTION DROPDOWN -->
+            <div
+              v-if="showMentionMenu"
+              class="mention-dropdown shadow-4"
+              :style="{
+                top: dropdownY + 'px',
+                left: dropdownX + 'px',
+              }"
+            >
+              <q-list dense>
+                <q-item
+                  v-for="(user, index) in mentionList"
+                  :key="user.id"
+                  clickable
+                  :active="index === selectedMentionIndex"
+                  active-class="mention-active"
+                  @click="insertMention(user)"
+                >
+                  <q-item-section>
+                    {{ user.name }}
+                  </q-item-section>
+                </q-item>
+              </q-list>
             </div>
-          </div>
-
-          <!-- MENTION DROPDOWN -->
-          <div
-            v-if="showMentionMenu"
-            class="mention-dropdown shadow-4"
-            :style="{
-              top: dropdownY + 'px',
-              left: dropdownX + 'px',
-            }"
-          >
-            <q-list dense>
-              <q-item
-                v-for="(user, index) in mentionList"
-                :key="user.id"
-                clickable
-                :active="index === selectedMentionIndex"
-                active-class="mention-active"
-                @click="insertMention(user)"
-              >
-                <q-item-section>
-                  {{ user.name }}
-                </q-item-section>
-              </q-item>
-            </q-list>
+            <!-- ✅ HIDDEN FILE INPUT -->
+            <input
+              type="file"
+              ref="commentImage"
+              hidden
+              accept="image/*"
+              @change="onCommentImageSelected"
+            />
+            <q-input
+              class="chat-input"
+              ref="commentInput"
+              v-model="newComment"
+              dense
+              borderless
+              autogrow
+              type="textarea"
+              placeholder="Message"
+              @update:model-value="handleInput"
+              @keyup="updateCaretPosition"
+              @keydown="handleKeyDown"
+            >
+              <template v-slot:append>
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="image"
+                  class="icon-btn"
+                  @click="triggerCommentImage"
+                />
+                <!-- SEND BUTTON -->
+                <q-btn
+                  round
+                  class="send-btn q-mr-sm"
+                  :disable="!newComment.trim()"
+                  icon="send"
+                  @click="addComment"
+                  color="primary"
+                  size="10px"
+                />
+              </template>
+            </q-input>
           </div>
         </div>
-        <!-- ✅ IMAGE BUTTON (ADD HERE) -->
-
-        <!-- ✅ HIDDEN FILE INPUT -->
-        <input
-          type="file"
-          ref="commentImage"
-          hidden
-          accept="image/*"
-          @change="onCommentImageSelected"
-        />
-
-        <!-- <q-btn label="Test Ref" @click="testRef" /> -->
       </div>
     </q-footer>
   </q-page>
@@ -1359,13 +1431,14 @@ export default {
 .chat-input-bar {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
 
   padding: 8px 10px;
-  background: #f0f2f5;
+}
 
-  /* sticky bottom feel */
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
+.full-width-sticky {
+  left: 0 !important;
+  right: 0 !important;
+  width: 100% !important;
 }
 
 /* INPUT */
@@ -1373,7 +1446,7 @@ export default {
   flex: 1;
   background: white;
   border-radius: 20px;
-  padding: 2px 5px;
+  /* padding: 2px 5px; */
 }
 
 /* Remove default borders */

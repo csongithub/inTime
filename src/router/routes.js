@@ -56,7 +56,7 @@ const routes = [
       {
         path: '',
         name: 'task-discussion',
-        component: () => import('pages/community/TaskDiscussionPage.vue'),
+        component: () => import('src/pages/community/TaskDiscussionPage.vue'),
       },
     ],
   },
