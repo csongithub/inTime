@@ -3,15 +3,7 @@
     <q-header elevated reveal class="bg-primary text-white q-pt-xl">
       <q-toolbar>
         <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
-
-        <q-toolbar-title>
-          inTIME<q-btn
-            label="New Team"
-            no-caps
-            class="glass-btn q-px-md q-ml-xs"
-            @click="openCreateCommunity"
-        /></q-toolbar-title>
-
+        <q-toolbar-title> inTIME</q-toolbar-title>
         <!-- 🔔 Notification Bell -->
         <NotificationBell />
       </q-toolbar>
@@ -37,9 +29,13 @@
       </q-list>
     </q-drawer>
 
-    <q-page-container>
+    <q-page-container :style="{ paddingBottom: safeBottom + 'px' }">
       <router-view />
     </q-page-container>
+    <!-- Footer -->
+    <q-footer bordered :style="footerStyle" class="bg-white">
+      <div style="height: 56px"></div>
+    </q-footer>
   </q-layout>
 </template>
 
@@ -49,7 +45,7 @@ import { useUserStore } from 'src/stores/user'
 import { useNotificationStore } from 'src/stores/notificationStore'
 import { auth, db } from 'boot/firebase'
 import { ref as dbRef, get } from 'firebase/database'
-import event from 'src/utils/eventBus'
+// import event from 'src/utils/eventBus'
 
 import NotificationBell from 'src/components/notification/NotificationBell.vue'
 import FCMService from 'src/services/FCMService'
@@ -64,6 +60,7 @@ export default {
   data() {
     return {
       leftDrawerOpen: false,
+      bottomInset: 0,
     }
   },
 
@@ -73,6 +70,29 @@ export default {
     },
     notificationStore() {
       return useNotificationStore()
+    },
+    safeBottom() {
+      let inset = this.bottomInset
+
+      if (inset < 30) {
+        return 0
+      }
+      return Math.min(inset, 60) - 8
+    },
+    footerStyle() {
+      let inset = this.bottomInset
+
+      // ✅ Ignore fake/small insets (gesture mode)
+      if (inset < 30) {
+        inset = 0
+      } else {
+        // real nav bar → normalize
+        inset = Math.min(inset, 60) - 8
+      }
+
+      return {
+        paddingBottom: inset + 'px',
+      }
     },
   },
 
@@ -105,9 +125,9 @@ export default {
   },
 
   methods: {
-    openCreateCommunity() {
-      event.emit('open-create-community')
-    },
+    // openCreateCommunity() {
+    //   event.emit('open-create-community')
+    // },
     toggleLeftDrawer() {
       this.leftDrawerOpen = !this.leftDrawerOpen
     },
@@ -121,4 +141,12 @@ export default {
   },
 }
 </script>
-<style scoped></style>
+<style scoped>
+.glass-btn {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  font-weight: 500;
+}
+</style>

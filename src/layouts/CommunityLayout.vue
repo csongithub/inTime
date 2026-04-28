@@ -24,14 +24,14 @@
     </q-page-container>
 
     <!-- Bottom Tabs -->
-    <q-footer bordered :style="footerStyle">
+    <q-footer bordered :style="footerStyle" class="bg-white">
       <q-tabs
         v-model="tab"
         dense
         align="justify"
         indicator-color="white"
         active-color="primary"
-        class="text-grey-5 bg-grey-2"
+        class="text-grey-5 bg-white"
       >
         <q-route-tab
           name="tasks"

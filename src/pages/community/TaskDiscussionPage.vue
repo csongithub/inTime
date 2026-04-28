@@ -116,7 +116,7 @@
             />
             <q-btn icon="close" size="sm" round dense color="negative" @click="clearCommentImage" />
           </div>
-          <q-input
+          <!-- <q-input
             class="mention-input"
             ref="commentInput"
             v-model="newComment"
@@ -146,7 +146,46 @@
                 @click="addComment"
               />
             </template>
-          </q-input>
+          </q-input> -->
+          <div class="chat-input-bar">
+            <!-- LEFT ICON -->
+
+            <!-- INPUT -->
+            <q-input
+              class="chat-input"
+              ref="commentInput"
+              v-model="newComment"
+              dense
+              borderless
+              autogrow
+              type="textarea"
+              placeholder="Message"
+              @update:model-value="handleInput"
+              @keyup="updateCaretPosition"
+              @keydown="handleKeyDown"
+            >
+              <template v-slot:append>
+                <q-btn
+                  flat
+                  round
+                  dense
+                  icon="image"
+                  class="icon-btn"
+                  @click="triggerCommentImage"
+                />
+                <!-- SEND BUTTON -->
+                <q-btn
+                  round
+                  class="send-btn"
+                  :disable="!newComment.trim()"
+                  icon="send"
+                  @click="addComment"
+                  color="primary"
+                  size="10px"
+                />
+              </template>
+            </q-input>
+          </div>
         </div>
 
         <!-- MENTION DROPDOWN -->
@@ -1323,4 +1362,46 @@ export default {
   max-width: 100%;
   max-height: 100%;
 }
+
+.chat-input-bar {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+
+  padding: 8px 10px;
+  background: #f0f2f5;
+
+  /* sticky bottom feel */
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+/* INPUT */
+.chat-input {
+  flex: 1;
+  background: white;
+  border-radius: 20px;
+  padding: 2px 5px;
+}
+
+/* Remove default borders */
+.chat-input .q-field__control {
+  padding: 0;
+}
+
+.chat-input textarea {
+  resize: none;
+}
+
+/* ICON BUTTON */
+.icon-btn {
+  color: #54656f;
+}
+.chat-input :deep(.q-field__inner) {
+  align-items: flex-end;
+}
+
+.chat-input :deep(.q-field__append) {
+  align-self: flex-end;
+}
+/* SEND BUTTON */
 </style>

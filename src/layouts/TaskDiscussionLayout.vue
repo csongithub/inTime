@@ -12,7 +12,7 @@
     <q-page-container>
       <router-view />
     </q-page-container>
-    <q-footer bordered :style="footerStyle"> </q-footer>
+    <q-footer bordered :style="footerStyle" class="bg-white"> </q-footer>
   </q-layout>
 </template>
 

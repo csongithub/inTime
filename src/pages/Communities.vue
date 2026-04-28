@@ -1,9 +1,9 @@
 <template>
-  <q-page v-if="communities.length === 0" class="flex flex-center column fit">
+  <q-page v-if="communities.length === 0" class="flex flex-center column full-height">
     <div>No Team found</div>
     <div>Please create one, or ask someone to add you</div>
   </q-page>
-  <q-page v-else class="column fit scroll">
+  <q-page class="column full-height">
     <!-- Sticky Header -->
     <div class="sticky-search">
       <q-card flat class="q-pa-sm">
@@ -38,7 +38,7 @@
     </div>
 
     <!-- Scrollable List -->
-    <div class="col">
+    <div class="col scroll">
       <q-list bordered separator>
         <q-item
           v-for="community in filteredCommunities"
@@ -69,9 +69,17 @@
       </q-list>
     </div>
   </q-page>
-  <!-- <q-page-sticky :offset="[18, 18]">
-    <q-btn size="md" position="bottom-right" round color="primary" icon="add" @click="openDialog" />
-  </q-page-sticky> -->
+  <q-page-sticky :offset="[18, 18]">
+    <q-btn
+      class="glass-btn q-px-md text-capitalize"
+      size="md"
+      position="bottom-right"
+      color="primary"
+      icon="add"
+      @click="openDialog"
+      label="New Team"
+    />
+  </q-page-sticky>
 </template>
 
 <script>
@@ -80,7 +88,7 @@ import { db, auth } from 'boot/firebase'
 import { ref as dbRef, get } from 'firebase/database'
 import { createCommunity } from '../services/CommunityService'
 import { getAvatarColor } from 'src/services/CommonUtils'
-import event from 'src/utils/eventBus'
+// import event from 'src/utils/eventBus'
 export default {
   name: 'IndexPage',
   mixins: [],
@@ -90,11 +98,11 @@ export default {
   components: {},
   created() {},
   async mounted() {
-    event.on('open-create-community', this.openDialog)
+    // event.on('open-create-community', this.openDialog)
     await this.loadCommunities()
   },
   beforeUnmount() {
-    event.off('open-create-community', this.openDialog)
+    // event.off('open-create-community', this.openDialog)
   },
   computed: {
     filteredCommunities() {
@@ -203,5 +211,20 @@ export default {
   top: 0;
   z-index: 1000;
   background: white;
+}
+.glass-btn {
+  border-radius: 14px;
+  color: white;
+
+  /* Glass effect */
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  /* subtle border */
+  border: 1px solid rgba(255, 255, 255, 0.25);
+
+  /* soft shadow */
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 </style>
