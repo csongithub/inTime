@@ -313,6 +313,7 @@ import { ref as dbRef, update, onValue, get, push, set, onChildAdded } from 'fir
 import { getAuth } from 'firebase/auth'
 import { notifyMention, notifyComment } from 'src/helpers/NotificationHelpers'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+// import { Platform } from 'quasar'
 import {
   getStorage,
   ref as storageRef,
@@ -924,6 +925,7 @@ export default {
         return
       }
 
+      // Mention selection
       if (e.key === 'Enter' && this.showMentionMenu) {
         e.preventDefault()
         const user = this.mentionList[this.selectedMentionIndex]
@@ -931,8 +933,14 @@ export default {
         return
       }
 
-      // Normal comment submission
-      if (e.key === 'Enter' && !e.shiftKey) {
+      const isMobile = this.$q.platform.is.mobile || this.$q.platform.is.capacitor
+      // 🔥 MOBILE: Enter = new line (do nothing)
+      if (isMobile && e.key === 'Enter') {
+        return
+      }
+
+      // 💻 DESKTOP: Enter = send, Shift+Enter = new line
+      if (!isMobile && e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault()
         this.addComment()
       }
