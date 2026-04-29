@@ -2,12 +2,28 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js')
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js')
 
+/**
+ * Development Configuration
+ */
+
+// firebase.initializeApp({
+//   apiKey: 'AIzaSyBp9myCoK_SV4Y3sirL0gRsNn4cCr8OdI4',
+//   authDomain: 'task-12f91.firebaseapp.com',
+//   projectId: 'task-12f91',
+//   messagingSenderId: '105465786949',
+//   appId: '1:105465786949:web:8cb198764688f285ffa92c',
+// })
+
+/**
+ * Production Configuration
+ */
+
 firebase.initializeApp({
-  apiKey: 'AIzaSyBp9myCoK_SV4Y3sirL0gRsNn4cCr8OdI4',
-  authDomain: 'task-12f91.firebaseapp.com',
-  projectId: 'task-12f91',
-  messagingSenderId: '105465786949',
-  appId: '1:105465786949:web:8cb198764688f285ffa92c',
+  apiKey: 'AIzaSyDy4iA6HWWSfkcHzHZHnaqIxpakq9rZ9FU',
+  authDomain: 'intime-prod.firebaseapp.com',
+  projectId: 'intime-prod',
+  messagingSenderId: '577842551018',
+  appId: '1:577842551018:web:deb7a4e4f28403cc2f1f93',
 })
 
 const messaging = firebase.messaging()
