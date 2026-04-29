@@ -21,7 +21,7 @@
 <script>
 // import { db } from 'boot/firebase'
 // import { ref, update } from 'firebase/database'
-import { auth } from 'src/firebase'
+import { auth } from 'boot/firebase'
 import { buildNotificationPath } from 'src/helpers/NotificationHelpers'
 
 export default {
