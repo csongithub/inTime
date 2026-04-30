@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "task-12f91"
+    "default": "task-12f91",
+    "dev": "task-12f91",
+    "prod": "intime-prod"
   }
 }
