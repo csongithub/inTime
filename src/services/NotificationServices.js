@@ -26,7 +26,8 @@ export default {
 
   async sendNotification(userIds, payload) {
     try {
-      const notificationAPI = `${import.meta.env.VITE_API_BASE_URL}/sendNotification`
+      // const notificationAPI = `${import.meta.env.VITE_API_BASE_URL}/sendNotification`
+      const notificationAPI = `${import.meta.env.VITE_NOTIFICATION_API}`
       console.log('API URL:', notificationAPI)
       const res = await fetch(notificationAPI, {
         method: 'POST',
