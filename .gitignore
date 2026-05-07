@@ -30,8 +30,8 @@ yarn-error.log*
 *.sln
 
 # local .env files
-.env
-.env.*
+#.env
+#.env.*
 
 #Firebase debug log
 firebase-debug.log
