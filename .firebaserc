@@ -1,7 +1,9 @@
 {
   "projects": {
     "default": "task-12f91",
-    "dev": "task-12f91",
-    "prod": "intime-prod"
-  }
+    "prod": "intime-prod",
+    "dev": "task-12f91"
+  },
+  "targets": {},
+  "etags": {}
 }
